@@ -4,7 +4,7 @@
 use std::{f32::consts::PI, collections::HashMap, sync::Mutex, fmt};
 use num_traits::{AsPrimitive, ToPrimitive, Unsigned, PrimInt, FromPrimitive};
 
-#[derive(Clone, Copy)]
+#[derive(Clone, Copy, PartialEq, Debug)]
 pub struct Color{
     r: f32,
     g: f32,
@@ -230,5 +230,12 @@ mod tests {
     fn defined_color(){
         println!("{:#}",DefinedColor::new(spherical_hcl(0.5, 0.75, 0.75),Gamma::new(2.0,2.4,2.0)));
         println!("{:#}",DefinedColor::new(spherical_hcl(0.5, 0.75, 0.75),Gamma::new(2.0,2.4,2.0)).to_color());
+    }
+
+    #[test]
+    fn test_clone(){
+        let orange = spherical_hcl((30.0/360.0),1.0,1.0);
+        let orange_clone = orange.clone();
+        assert_eq!(orange,orange_clone);
     }
 }
