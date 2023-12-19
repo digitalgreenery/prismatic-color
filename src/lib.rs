@@ -89,7 +89,7 @@ impl fmt::Display for Gamma {
         write!(f, "Gamma (r: {}, g: {}, b: {})", self.r, self.g, self.b)
     }
 }
-
+ 
 #[derive(Clone, Copy)]
 pub struct DefinedColor {
     pub color: Color,
