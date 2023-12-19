@@ -6,9 +6,9 @@ use num_traits::{AsPrimitive, ToPrimitive, Unsigned, PrimInt, FromPrimitive};
 
 #[derive(Clone, Copy, PartialEq, Debug)]
 pub struct Color{
-    r: f32,
-    g: f32,
-    b: f32,
+    pub r: f32,
+    pub g: f32,
+    pub b: f32,
 }
 
 impl Color {
@@ -61,9 +61,9 @@ impl fmt::Display for Color {
 
 #[derive(Clone, Copy)]
 pub struct Gamma {
-    r: f32,
-    g: f32,
-    b: f32,
+    pub r: f32,
+    pub g: f32,
+    pub b: f32,
 }
 
 impl Gamma {
