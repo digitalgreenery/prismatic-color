@@ -3,6 +3,8 @@
 
 use std::{f32::consts::PI, collections::HashMap, sync::Mutex, fmt};
 use num_traits::{AsPrimitive, ToPrimitive, Unsigned, PrimInt, FromPrimitive};
+
+#[derive(Clone, Copy)]
 pub struct Color{
     r: f32,
     g: f32,
@@ -57,6 +59,7 @@ impl fmt::Display for Color {
     }
 }
 
+#[derive(Clone, Copy)]
 pub struct Gamma {
     r: f32,
     g: f32,
@@ -87,6 +90,7 @@ impl fmt::Display for Gamma {
     }
 }
 
+#[derive(Clone, Copy)]
 pub struct DefinedColor {
     pub color: Color,
     pub gamma: Gamma,
