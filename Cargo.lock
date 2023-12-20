@@ -25,7 +25,7 @@ dependencies = [
 
 [[package]]
 name = "spherical_rgb"
-version = "0.1.0"
+version = "0.1.1"
 dependencies = [
  "lazy_static",
  "num-traits",
