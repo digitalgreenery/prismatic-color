@@ -164,6 +164,25 @@ pub fn spherical_hcl(hue: f32, chroma: f32, luminance: f32) -> Color{
     Color::from_tuple(result)
 }
 
+pub fn cubic_hsv(hue: f32, saturation: f32, value: f32) -> Color{
+    let h = (hue * 360.).round() as u16 % 360;
+    let c = value * saturation;
+    let x = c * (1. - f32::abs((h as f32) / 60. % 2. - 1.));
+    let m = value - c;
+
+    let (r,g,b) = match h {
+        0..=59    => (c,x,0.),
+        60..=119  => (x,c,0.),
+        120..=179 => (0.,c,x),
+        180..=239 => (0.,x,c),
+        240..=299 => (x,0.,c),
+        300..=359 => (c,0.,x),
+        _ => (0.,0.,0.)
+
+    };
+    Color::new(r+m,g+m,b+m)
+}
+
 fn set_to_zero_if_small(value: f32) -> f32 {
     if value < 1e-7 {
         0.0
