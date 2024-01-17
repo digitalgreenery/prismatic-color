@@ -1,7 +1,7 @@
 //Digital Greenery
 //Spherical RGB library
 
-use std::{f32::consts::PI, collections::HashMap, sync::Mutex, fmt, ops::Index};
+use std::{f32::consts::PI, collections::HashMap, sync::Mutex, fmt};
 use num_traits::{AsPrimitive, Unsigned, PrimInt};
 
 #[derive(Debug, Clone, Copy, PartialEq)]
@@ -15,7 +15,7 @@ enum ColorType {
     //Spectral Color
     // WI,
 
-    //Component Representations
+    //Component Representations 
     RGBA,
     CMYA,
 
@@ -40,7 +40,7 @@ enum ColorType {
     LabA,
 
 }
-
+//Alpha could be used for specular color
 
 impl Color {
     // Color ructor
@@ -70,7 +70,7 @@ impl Color {
     }
 
     pub const fn to_tuple(&self) -> (f32,f32,f32,f32){
-        (self.components[0],self.components[1],self.components[2],self.components[3])
+        self.components.into()
     }
 
     pub const fn to_array(&self) -> [f32;4]{
@@ -86,7 +86,7 @@ impl Color {
             ColorType::CMYA => cmy_to_rgb(self.components),
             ColorType::RGBW => rgbw_to_rgb(self.components),
             ColorType::CMYK => cmyk_to_rgb(self.components),
-            ColorType::SphericalHCLA => spherical_hcl_to_rgb(self.components),
+            ColorType::SphericalHCLA => hcl_to_rgb(self.components),
             ColorType::SphericalHWBA => spherical_hwb_to_rgb(self.components),
             ColorType::HSLA => hsl_to_rgb(self.components),
             ColorType::HSVA => hsv_to_rgb(self.components),
@@ -128,12 +128,16 @@ impl Color {
         self.to_color(ColorType::CMYK, rgb_to_cmyk)
     }
 
-    // pub fn rgb_from_tuple(tuple (f32: r, f32, f32, f32)) -> Color {
-    //     Color::RGB { red: r, green: g, blue: b, alpha: a}
-    // }
-    // pub fn color_lerp(color_a: Color, color_b: Color, percent: f32) -> Color {
-    //     Color::from_tuple(tuple_lerp(color_a.to_tuple(), color_b.to_tuple(), percent))
-    // }
+    pub fn to_cmy(&self) -> Color{
+        self.to_color(ColorType::CMYA, rgb_to_cmy)
+    }
+
+    pub fn to_rgbw(&self) -> Color{
+        self.to_color(ColorType::RGBW, rgb_to_rgbw)
+    }
+
+
+
     // pub fn to_integers<T>(&self, scale: Option<T>) -> (T, T, T)
     //     where
     //         T: Unsigned + PrimInt + AsPrimitive<f32> + 'static,
@@ -263,8 +267,8 @@ impl Color {
     pub const PLUM: Color = Color::hwb(315./360.,0.,0.5);
     pub const THISTLE: Color = Color::hwb(315./360.,0.25,0.25);
 
-    pub const ROSE: Color = Color::hwb(330./360.,0.,0.);
-    pub const PINK: Color = Color::hwb(330./360.,0.5,0.);
+    pub const PINK: Color = Color::hwb(330./360.,0.,0.);
+    pub const ROSE: Color = Color::hwb(330./360.,0.5,0.);
     pub const CLARET: Color = Color::hwb(330./360.,0.,0.5);
     pub const RASPBERRY: Color = Color::hwb(330./360.,0.25,0.25);
 
@@ -278,7 +282,7 @@ impl Color {
 }
 
 
-
+//To RGBA
 fn cmy_to_rgb(components: [f32; 4]) -> [f32; 4] {
     let (c,m, y, a) = components.into();
     [1.-c,1.-m,1.-y,a]
@@ -294,59 +298,34 @@ fn cmyk_to_rgb(components: [f32; 4]) -> [f32; 4] {
     [(1.-c)*(1.-k),(1.-m)*(1.-k),(1.-y)*(1.-k),0.]
 }
 
-fn spherical_hcl_to_rgb(hcl: [f32;4]) -> [f32;4] {
+fn hcl_to_rgb(hcl: [f32;4]) -> [f32;4] {
     let (hue,chroma,luminance,alpha) = hcl.into();
-
-    //Floats can't be used in a hash map so represent them as u32
-    let key_hsv = (
-        (hue * 10_000_000.0) as u32,
-        (chroma * 10_000_000.0) as u32,
-        (luminance * 10_000_000.0) as u32
-    );
-
-    // Define a static hash map for caching results
-    lazy_static::lazy_static! {
-        static ref CACHE: Mutex<HashMap<(u32, u32, u32), (f32, f32, f32)>> = Mutex::new(HashMap::new());
-    }
-
-    // Check if the result is already cached and return it if it exists
-    if let Some((r,g,b)) = CACHE.lock().unwrap().get(&key_hsv) {
-        return [*r,*g,*b,alpha];
-    }
 
     //HSV approximate implementation of spherical RGB 
     //Spherical RGB has three sides: yellow, cyan, and magenta.
     //Phi is the angle towards the grey point for saturation.
-    //Technically it's chroma and luminance, so this would actually be HCL, but more people are familiar with the term HSV, so whatever
-    let hue_arc_length: f32 = 1.0 / 3.0;
-    let hue_part: f32 = (PI / 2.0) * ((3.0 * hue) % 1.0) * chroma + (PI / 4.0) * (1.0 - chroma);
+    let hue = hue * 3.;
+    let hue_angle: f32 = (PI / 2.0) * (hue % 1.0) * chroma + (PI / 4.0) * (1.0 - chroma);
     let phi: f32 = 1.95968918625 - 1.1 * (1.15074 - 0.7893882996 * chroma).sin();
     //Returns the xyz coordinate from the spherical coordinates
-    let a: f32 = set_to_zero_if_small(luminance * hue_part.cos() * phi.sin());
-    let b: f32 = set_to_zero_if_small(luminance * hue_part.sin() * phi.sin());
+    let a: f32 = set_to_zero_if_small(luminance * hue_angle.cos() * phi.sin());
+    let b: f32 = set_to_zero_if_small(luminance * hue_angle.sin() * phi.sin());
     let c: f32 = set_to_zero_if_small(luminance * phi.cos());
 
-    let result;
+    let (r,g,b) =
+    match  hue.floor() as u8 {
+        0 => (a,b,c),
+        1 => (c,a,b),
+        _ => (b,c,a),
+    };
 
-    if hue < hue_arc_length{              //Yellow Arc
-        result = (a, b, c);
-    } else if hue < 2.0 * hue_arc_length {//Cyan Arc
-        result = (c, a, b);
-    } else {                            //Magenta Arc
-        result = (b, c, a);
-    }
-
-    // Cache the result
-    CACHE.lock().unwrap().insert(key_hsv, result);
-
-    let (r,g,b) = result;
     [r,g,b,alpha]
 }
 
 fn spherical_hwb_to_rgb(hwb: [f32;4]) -> [f32;4] {
     let (hue,white,black,alpha) = hwb.into();
     let hcl = [hue,1.-white,1.-black,alpha];
-    spherical_hcl_to_rgb(hcl)
+    hcl_to_rgb(hcl)
 }
 
 fn hsl_to_rgb(components: [f32; 4]) -> [f32; 4] {
@@ -392,13 +371,65 @@ fn lab_to_rgb(components: [f32; 4]) -> [f32; 4] {
     todo!()
 }
 
+//From RGBA
 fn rgb_to_cmyk(components: [f32; 4]) -> [f32; 4] {
     // 1.-max
     todo!()
 }
 
+fn rgb_to_rgbw(components: [f32; 4]) -> [f32; 4] {
+    let (r, g, b, _) = components.into();
+    let w = r.min(g).min(b);
+    [r - w, g - w, b - w, w]
+}
+
+fn rgb_to_cmy(components: [f32; 4]) -> [f32; 4] {
+    let (r, g, b, a) = components.into();
+    [1.-r, 1.-g, 1.-b, a]
+}
+
 fn rgb_to_hcl(rgb: [f32;4]) -> [f32;4] {
-    return [0.,0.,0.,0.]
+    // let (hue,chroma,luminance,alpha) = hcl.into();
+
+    // let hue = hue * 3.;
+    // let hue_angle: f32 = (PI / 2.0) * (hue % 1.0) * chroma + (PI / 4.0) * (1.0 - chroma);
+    // let phi: f32 = 1.95968918625 - 1.1 * (1.15074 - 0.7893882996 * chroma).sin();
+
+    // let a: f32 = set_to_zero_if_small(luminance * hue_angle.cos() * phi.sin());
+    // let b: f32 = set_to_zero_if_small(luminance * hue_angle.sin() * phi.sin());
+    // let c: f32 = set_to_zero_if_small(luminance * phi.cos());
+
+    // let (r,g,b) =
+    // match  hue.floor() as u8 {
+    //     0 => (a,b,c),
+    //     1 => (c,a,b),
+    //     _ => (b,c,a),
+    // };
+
+    let (r,g,b,alpha) = rgb.into();
+    if set_to_zero_if_small(r.max(g).max(b))  == 0. {return [0.,0.,0.,alpha]}
+    let (c,m,y,_) = rgb_to_cmy(rgb).into();
+    let secondary = [y,c,m].index_of(c.max(m).max(y));
+
+    let (a,b,c) =
+    match secondary {
+        0 => (r,g,b),
+        1 => (g,b,r),
+        _ => (b,r,g),
+    };
+
+    let luminance = (a*a+b*b+c*c).sqrt();
+    let hue_angle = b.atan2(c);
+    let phi = (a/luminance).acos();
+    let chroma = (1.15074 - ((phi - 1.95968918625)/-1.1).asin())/0.7893882996;
+    if chroma == 0. {
+        let three: f32 = 3.0;
+        let grey_point = 1./three.sqrt() * luminance;
+        return [grey_point,grey_point,grey_point,alpha]}
+    let hue = (4. * hue_angle - PI * (1.-chroma))/(6.*PI*chroma);
+
+    [hue,chroma,luminance,alpha]
+
 }
 
 fn rgb_to_spherical_hwb(rgb: [f32;4]) -> [f32;4] {
@@ -434,8 +465,7 @@ fn rgb_to_hsv(rgba: [f32;4]) -> [f32;4] {
     match index {
         0 => b - g,
         1 => r - b + 2.,
-        2 => g - r + 4.,
-        _ => 0. //Should be unreachable
+        _ => g - r + 4.,
     };
     
     let h = h / 6. % 1.;
@@ -450,6 +480,7 @@ trait ArrayExt {
     fn min_value(&self) -> f32;
     fn max_value(&self) -> f32;
     fn index_of(&self, value: f32) -> usize;
+    fn check_bounds(&self) -> [f32];
 }
 
 // Implement the trait for arrays of f32
@@ -466,6 +497,35 @@ impl ArrayExt for [f32] {
         self.iter().position(|&x| x == value).unwrap()
     }
 
+    fn check_bounds(&self) -> [f32] {
+        for &value in self {
+            if value < 0.0 || value > 1.0 {
+                panic!("Color components must be between 0 and 1");
+            }
+            else{
+                *self
+            }
+        }
+    }
+
+}
+
+#[derive(Clone, Copy)]
+pub enum NormalCurve {
+    Linear,
+    Power(f32),
+    Quadratiic(f32,f32),
+    Cubic(f32,f32,f32,f32),
+}
+
+struct ComposedMapping {
+    curves: [Vec<(NormalCurve, f32, f32)>;4],
+}
+
+
+pub struct DefinedColor {
+    color: Color,
+    mapping_curve: ComposedMapping,
 }
 
 
@@ -592,6 +652,12 @@ mod tests {
         let hwb_recovered = rgb_to_cubic_hwb(rgb);
         println!("HWB: {:?}, RGB: {:?}, HWB Recovered: {:?}",hwb,rgb,hwb_recovered);
         assert_eq!(hwb, hwb_recovered);
+
+        let hcl = [0.6041666666666666,0.9,1.0,1.];
+        let rgb:[f32; 4] = hcl_to_rgb(hcl);
+        let hcl_recovered = rgb_to_hcl(rgb);
+        println!("HCL: {:?}, RGB: {:?}, HCL Recovered: {:?}",hcl,rgb,hcl_recovered);
+        assert_eq!(hcl, hcl_recovered);
     }
 
     #[test]
