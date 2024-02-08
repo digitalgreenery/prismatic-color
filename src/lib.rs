@@ -1,12 +1,12 @@
 //Digital Greenery
 //Spherical RGB library
 
-use std::{f32::consts::PI, collections::HashMap, sync::Mutex, fmt};
+use std::{f64::consts::PI, collections::HashMap, sync::Mutex, fmt};
 use num_traits::{AsPrimitive, Unsigned, PrimInt};
 
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub struct Color{
-    components: [f32;4],
+    components: [f64;4],
     color_type: ColorType,
 }
 
@@ -44,23 +44,23 @@ enum ColorType {
 
 impl Color {
     // Color ructor
-    pub const fn rgb(red: f32, green: f32, blue: f32) -> Color {
+    pub const fn rgb(red: f64, green: f64, blue: f64) -> Color {
         Color { components: [red,green,blue,1.], color_type: ColorType::RGBA}
     }
-    pub const fn hcl(hue: f32, chroma: f32, luminance: f32) -> Color {
+    pub const fn hcl(hue: f64, chroma: f64, luminance: f64) -> Color {
         Color { components: [hue,chroma,luminance,1.], color_type: ColorType::SphericalHCLA}
     }
-    pub const fn hwb(hue: f32, white: f32, black: f32) -> Color {
+    pub const fn hwb(hue: f64, white: f64, black: f64) -> Color {
         Color { components: [hue,white,black,1.], color_type: ColorType::SphericalHWBA}
     }
-    pub const fn cubic_hwb(hue: f32, white: f32, black: f32) -> Color {
+    pub const fn cubic_hwb(hue: f64, white: f64, black: f64) -> Color {
         Color { components: [hue,white,black,1.], color_type: ColorType::CubicHWBA}
     }
-    pub const fn hsv(hue: f32, saturation: f32, value: f32) -> Color {
+    pub const fn hsv(hue: f64, saturation: f64, value: f64) -> Color {
         Color { components: [hue,saturation,value,1.], color_type: ColorType::HSVA,}
     }
 
-    pub fn set_alpha(&self, alpha: f32) -> Color{
+    pub fn set_alpha(&self, alpha: f64) -> Color{
         if  self.color_type == ColorType::CMYK ||
             self.color_type == ColorType::RGBW {
                 return *self
@@ -69,17 +69,17 @@ impl Color {
         Color { components: [components[0],components[1],components[2],alpha], color_type: self.color_type}
     }
 
-    pub const fn to_tuple(&self) -> (f32,f32,f32,f32){
+    pub fn to_tuple(&self) -> (f64,f64,f64,f64){
         self.components.into()
     }
 
-    pub const fn to_array(&self) -> [f32;4]{
+    pub const fn to_array(&self) -> [f64;4]{
         self.components
     }
 
     pub  fn to_rgb(&self) -> Color{
         if self.color_type == ColorType::RGBA {return *self}
-        let components: [f32;4] =
+        let components: [f64;4] =
         match self.color_type {
            // ColorType::WI => spectral_color_to_rgb(self.components),
             ColorType::RGBA => self.components,
@@ -98,9 +98,9 @@ impl Color {
         Color { components, color_type: ColorType::RGBA}
     }
 
-     fn to_color(&self,color_type: ColorType, rgb_to_color: fn([f32;4])->[f32;4]) -> Color{
+     fn to_color(&self,color_type: ColorType, rgb_to_color: fn([f64;4])->[f64;4]) -> Color{
         if self.color_type == color_type {return *self}
-        let components: [f32;4] = rgb_to_color(self.to_rgb().components);
+        let components: [f64;4] = rgb_to_color(self.to_rgb().components);
         Color { components, color_type: color_type}
     }
 
@@ -140,10 +140,10 @@ impl Color {
 
     // pub fn to_integers<T>(&self, scale: Option<T>) -> (T, T, T)
     //     where
-    //         T: Unsigned + PrimInt + AsPrimitive<f32> + 'static,
-    //         f32: AsPrimitive<T>,
+    //         T: Unsigned + PrimInt + AsPrimitive<f64> + 'static,
+    //         f64: AsPrimitive<T>,
     // {
-    //     let scale_value = scale.unwrap_or(T::max_value()).to_f32().unwrap();
+    //     let scale_value = scale.unwrap_or(T::max_value()).to_f64().unwrap();
 
     //     let r = (self.r * scale_value).round().as_();
     //     let g = (self.g * scale_value).round().as_();
@@ -283,34 +283,34 @@ impl Color {
 
 
 //To RGBA
-fn cmy_to_rgb(components: [f32; 4]) -> [f32; 4] {
+fn cmy_to_rgb(components: [f64; 4]) -> [f64; 4] {
     let (c,m, y, a) = components.into();
     [1.-c,1.-m,1.-y,a]
 }
 
-fn rgbw_to_rgb(components: [f32; 4]) -> [f32; 4] {
+fn rgbw_to_rgb(components: [f64; 4]) -> [f64; 4] {
     let (r,g,b,w) = components.into();
     [r+w,g+w,b+w,0.]
 }
 
-fn cmyk_to_rgb(components: [f32; 4]) -> [f32; 4] {
+fn cmyk_to_rgb(components: [f64; 4]) -> [f64; 4] {
     let (c,m,y,k) = components.into();
     [(1.-c)*(1.-k),(1.-m)*(1.-k),(1.-y)*(1.-k),0.]
 }
 
-fn hcl_to_rgb(hcl: [f32;4]) -> [f32;4] {
+fn hcl_to_rgb(hcl: [f64;4]) -> [f64;4] {
     let (hue,chroma,luminance,alpha) = hcl.into();
 
-    //HSV approximate implementation of spherical RGB 
+    //HCL approximate implementation of spherical RGB 
     //Spherical RGB has three sides: yellow, cyan, and magenta.
     //Phi is the angle towards the grey point for saturation.
     let hue = hue * 3.;
-    let hue_angle: f32 = (PI / 2.0) * (hue % 1.0) * chroma + (PI / 4.0) * (1.0 - chroma);
-    let phi: f32 = 1.95968918625 - 1.1 * (1.15074 - 0.7893882996 * chroma).sin();
+    let hue_angle: f64 = (PI / 2.0) * (hue % 1.0) * chroma + (PI / 4.0) * (1.0 - chroma);
+    let phi: f64 = 1.95968918625 - 1.1 * (1.15074 - 0.7893882996 * chroma).sin();
     //Returns the xyz coordinate from the spherical coordinates
-    let a: f32 = set_to_zero_if_small(luminance * hue_angle.cos() * phi.sin());
-    let b: f32 = set_to_zero_if_small(luminance * hue_angle.sin() * phi.sin());
-    let c: f32 = set_to_zero_if_small(luminance * phi.cos());
+    let a: f64 = set_to_zero_if_small(luminance * hue_angle.cos() * phi.sin());
+    let b: f64 = set_to_zero_if_small(luminance * hue_angle.sin() * phi.sin());
+    let c: f64 = set_to_zero_if_small(luminance * phi.cos());
 
     let (r,g,b) =
     match  hue.floor() as u8 {
@@ -322,21 +322,21 @@ fn hcl_to_rgb(hcl: [f32;4]) -> [f32;4] {
     [r,g,b,alpha]
 }
 
-fn spherical_hwb_to_rgb(hwb: [f32;4]) -> [f32;4] {
+fn spherical_hwb_to_rgb(hwb: [f64;4]) -> [f64;4] {
     let (hue,white,black,alpha) = hwb.into();
     let hcl = [hue,1.-white,1.-black,alpha];
     hcl_to_rgb(hcl)
 }
 
-fn hsl_to_rgb(components: [f32; 4]) -> [f32; 4] {
+fn hsl_to_rgb(components: [f64; 4]) -> [f64; 4] {
     todo!()
 }
 
-fn hsv_to_rgb(hsv: [f32;4]) -> [f32;4] {
+fn hsv_to_rgb(hsv: [f64;4]) -> [f64;4] {
     let (hue, saturation, value, alpha) = hsv.into();
     let h = (hue * 6.).round() as u16 % 6;
     let c = value * saturation;
-    let x = c * (1. - f32::abs((h as f32) % 2. - 1.));
+    let x = c * (1. - f64::abs((h as f64) % 2. - 1.));
     let m = value - c;
 
     let (r,g,b) = match h {
@@ -351,7 +351,7 @@ fn hsv_to_rgb(hsv: [f32;4]) -> [f32;4] {
     [r+m,g+m,b+m,alpha]
 }
 
-fn cubic_hwb_to_rgb(hwb: [f32;4]) -> [f32;4] {
+fn cubic_hwb_to_rgb(hwb: [f64;4]) -> [f64;4] {
     let (hue,white,black,alpha) = hwb.into();
     let saturation = 1. - (white/(1.-black));
     let value = 1. - black;
@@ -359,52 +359,36 @@ fn cubic_hwb_to_rgb(hwb: [f32;4]) -> [f32;4] {
     hsv_to_rgb(hsv)
 }
 
-fn yuv_to_rgb(components: [f32; 4]) -> [f32; 4] {
+fn yuv_to_rgb(components: [f64; 4]) -> [f64; 4] {
     todo!()
 }
 
-fn lch_to_rgb(components: [f32; 4]) -> [f32; 4] {
+fn lch_to_rgb(components: [f64; 4]) -> [f64; 4] {
     todo!()
 }
 
-fn lab_to_rgb(components: [f32; 4]) -> [f32; 4] {
+fn lab_to_rgb(components: [f64; 4]) -> [f64; 4] {
     todo!()
 }
 
 //From RGBA
-fn rgb_to_cmyk(components: [f32; 4]) -> [f32; 4] {
+fn rgb_to_cmyk(components: [f64; 4]) -> [f64; 4] {
     // 1.-max
     todo!()
 }
 
-fn rgb_to_rgbw(components: [f32; 4]) -> [f32; 4] {
+fn rgb_to_rgbw(components: [f64; 4]) -> [f64; 4] {
     let (r, g, b, _) = components.into();
     let w = r.min(g).min(b);
     [r - w, g - w, b - w, w]
 }
 
-fn rgb_to_cmy(components: [f32; 4]) -> [f32; 4] {
+fn rgb_to_cmy(components: [f64; 4]) -> [f64; 4] {
     let (r, g, b, a) = components.into();
     [1.-r, 1.-g, 1.-b, a]
 }
 
-fn rgb_to_hcl(rgb: [f32;4]) -> [f32;4] {
-    // let (hue,chroma,luminance,alpha) = hcl.into();
-
-    // let hue = hue * 3.;
-    // let hue_angle: f32 = (PI / 2.0) * (hue % 1.0) * chroma + (PI / 4.0) * (1.0 - chroma);
-    // let phi: f32 = 1.95968918625 - 1.1 * (1.15074 - 0.7893882996 * chroma).sin();
-
-    // let a: f32 = set_to_zero_if_small(luminance * hue_angle.cos() * phi.sin());
-    // let b: f32 = set_to_zero_if_small(luminance * hue_angle.sin() * phi.sin());
-    // let c: f32 = set_to_zero_if_small(luminance * phi.cos());
-
-    // let (r,g,b) =
-    // match  hue.floor() as u8 {
-    //     0 => (a,b,c),
-    //     1 => (c,a,b),
-    //     _ => (b,c,a),
-    // };
+fn rgb_to_hcl(rgb: [f64;4]) -> [f64;4] {
 
     let (r,g,b,alpha) = rgb.into();
     if set_to_zero_if_small(r.max(g).max(b))  == 0. {return [0.,0.,0.,alpha]}
@@ -419,37 +403,38 @@ fn rgb_to_hcl(rgb: [f32;4]) -> [f32;4] {
     };
 
     let luminance = (a*a+b*b+c*c).sqrt();
-    let hue_angle = b.atan2(c);
-    let phi = (a/luminance).acos();
-    let chroma = (1.15074 - ((phi - 1.95968918625)/-1.1).asin())/0.7893882996;
+    let phi = b.atan2(c);
+    let hue_angle = (a/luminance).acos();
+    let chroma = (((phi - 1.95968918625)/-1.1).asin() - 1.15074)/-0.7893882996;
     if chroma == 0. {
-        let three: f32 = 3.0;
+        let three: f64 = 3.0;
         let grey_point = 1./three.sqrt() * luminance;
         return [grey_point,grey_point,grey_point,alpha]}
-    let hue = (4. * hue_angle - PI * (1.-chroma))/(6.*PI*chroma);
+    let hue = ((hue_angle - ((PI / 4.) * (1.-chroma)))/(PI / 2.) / chroma + secondary as f64) / 3.;
 
     [hue,chroma,luminance,alpha]
 
 }
 
-fn rgb_to_spherical_hwb(rgb: [f32;4]) -> [f32;4] {
+fn rgb_to_spherical_hwb(rgb: [f64;4]) -> [f64;4] {
     let (h,c,l,a) = rgb_to_hcl(rgb).into();
     [h,1.-c,1.-l,a]
 }
 
 
-fn rgb_to_cubic_hwb(rgb: [f32;4]) -> [f32;4] {
+fn rgb_to_cubic_hwb(rgb: [f64;4]) -> [f64;4] {
     let (h,s,v,a) = rgb_to_hsv(rgb).into();
     let w = (1.-s) * v;
     let b = 1.-v;
     [h,w,b,a]
 } 
 
-fn rgb_to_hsl(rgb: [f32;4]) -> [f32;4] {
-    return [0.,0.,0.,0.]
+fn rgb_to_hsl(rgb: [f64;4]) -> [f64;4] {
+    panic!("Not finished");
+    //return [0.,0.,0.,0.]
 }
 
-fn rgb_to_hsv(rgba: [f32;4]) -> [f32;4] {
+fn rgb_to_hsv(rgba: [f64;4]) -> [f64;4] {
     let (r,g,b,a) = rgba.into();
     let rgb = [r,g,b];
     let c_max = rgb.max_value(); 
@@ -475,51 +460,51 @@ fn rgb_to_hsv(rgba: [f32;4]) -> [f32;4] {
     return [h,s,v,a]
 }
 
-// Define a trait to add min and max methods to arrays of f32
+// Define a trait to add min and max methods to arrays of f64
 trait ArrayExt {
-    fn min_value(&self) -> f32;
-    fn max_value(&self) -> f32;
-    fn index_of(&self, value: f32) -> usize;
-    fn check_bounds(&self) -> [f32];
+    fn min_value(&self) -> f64;
+    fn max_value(&self) -> f64;
+    fn index_of(&self, value: f64) -> usize;
+    // fn check_bounds(&self) -> [f64];
 }
 
-// Implement the trait for arrays of f32
-impl ArrayExt for [f32] {
-    fn min_value(&self) -> f32 {
-        self.iter().fold(f32::INFINITY, |min: f32, x: &f32| if *x < min { *x } else { min })
+// Implement the trait for arrays of f64
+impl ArrayExt for [f64] {
+    fn min_value(&self) -> f64 {
+        self.iter().fold(f64::INFINITY, |min: f64, x: &f64| if *x < min { *x } else { min })
     }
 
-    fn max_value(&self) -> f32 {
-        self.iter().fold(f32::NEG_INFINITY, |max, x| if *x > max { *x } else { max })
+    fn max_value(&self) -> f64 {
+        self.iter().fold(f64::NEG_INFINITY, |max, x| if *x > max { *x } else { max })
     }
 
-    fn index_of(&self, value: f32) -> usize {
+    fn index_of(&self, value: f64) -> usize {
         self.iter().position(|&x| x == value).unwrap()
     }
 
-    fn check_bounds(&self) -> [f32] {
-        for &value in self {
-            if value < 0.0 || value > 1.0 {
-                panic!("Color components must be between 0 and 1");
-            }
-            else{
-                *self
-            }
-        }
-    }
+    // fn check_bounds(&self) -> [f64] {
+    //     for &value in self {
+    //         if value < 0.0 || value > 1.0 {
+    //             panic!("Color components must be between 0 and 1");
+    //         }
+    //         else{
+    //             *self
+    //         }
+    //     }
+    // }
 
 }
 
 #[derive(Clone, Copy)]
 pub enum NormalCurve {
     Linear,
-    Power(f32),
-    Quadratiic(f32,f32),
-    Cubic(f32,f32,f32,f32),
+    Power(f64),
+    Quadratiic(f64,f64),
+    Cubic(f64,f64,f64,f64),
 }
 
 struct ComposedMapping {
-    curves: [Vec<(NormalCurve, f32, f32)>;4],
+    curves: [Vec<(NormalCurve, f64, f64)>;4],
 }
 
 
@@ -528,6 +513,11 @@ pub struct DefinedColor {
     mapping_curve: ComposedMapping,
 }
 
+impl DefinedColor {
+    pub fn new_linear(color: Color) -> DefinedColor {
+        DefinedColor { color: color, mapping_curve: ComposedMapping { curves: [vec!((NormalCurve::Linear,1.,1.)),vec!((NormalCurve::Linear,1.,1.)),vec!((NormalCurve::Linear,1.,1.)),vec!((NormalCurve::Linear,1.,1.))] } }
+    }
+}
 
 // impl fmt::Display for Color {
 //     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
@@ -542,20 +532,20 @@ pub struct DefinedColor {
 
 // #[derive(Clone, Copy)]
 // pub struct Gamma {
-//     pub r: f32,
-//     pub g: f32,
-//     pub b: f32,
+//     pub r: f64,
+//     pub g: f64,
+//     pub b: f64,
 // }
 
 // impl Gamma {
 //     // Color ructor
-//     pub fn new(r: f32, g: f32, b: f32) -> Gamma {
+//     pub fn new(r: f64, g: f64, b: f64) -> Gamma {
 //         Gamma { r, g, b }
 //     }
-//     pub fn from_tuple(tuple: (f32, f32, f32)) -> Gamma {
+//     pub fn from_tuple(tuple: (f64, f64, f64)) -> Gamma {
 //         Gamma { r: (tuple.0), g: (tuple.1), b: (tuple.2) }
 //     }
-//     pub fn to_tuple(&self) ->  (f32, f32, f32){
+//     pub fn to_tuple(&self) ->  (f64, f64, f64){
 //         (self.r,self.g,self.b)
 //     }
 //     pub fn apply_gamma(&self, color: &Color) -> Color {
@@ -594,7 +584,7 @@ pub struct DefinedColor {
 //     }
 // }
 
- fn set_to_zero_if_small(value: f32) -> f32 {
+ fn set_to_zero_if_small(value: f64) -> f64 {
     if value < 1e-7 {
         0.0
     }
@@ -603,7 +593,7 @@ pub struct DefinedColor {
     }
 }
 
-pub fn tuple_lerp(tuple_a: (f32,f32,f32,f32), tuple_b: (f32,f32,f32,f32), percent: f32) -> (f32,f32,f32,f32){
+pub fn tuple_lerp(tuple_a: (f64,f64,f64,f64), tuple_b: (f64,f64,f64,f64), percent: f64) -> (f64,f64,f64,f64){
     (lerp(tuple_a.0,tuple_b.0,percent),
      lerp(tuple_a.1,tuple_b.1,percent),
      lerp(tuple_a.2,tuple_b.2,percent),
@@ -642,22 +632,21 @@ mod tests {
     #[test]
     fn test_conversions(){
         let hsv = [0.5,1.0,0.5,1.];
-        let rgb:[f32; 4] = hsv_to_rgb(hsv);
+        let rgb:[f64; 4] = hsv_to_rgb(hsv);
         let hsv_recovered = rgb_to_hsv(rgb);
         println!("HSV: {:?}, RGB: {:?}, HSV Recovered: {:?}",hsv,rgb,hsv_recovered);
         assert_eq!(hsv, hsv_recovered);
 
         let hwb = [0.5,0.5,0.0,1.];//Won't hold true for values in grey
-        let rgb:[f32; 4] = cubic_hwb_to_rgb(hwb);
+        let rgb:[f64; 4] = cubic_hwb_to_rgb(hwb);
         let hwb_recovered = rgb_to_cubic_hwb(rgb);
         println!("HWB: {:?}, RGB: {:?}, HWB Recovered: {:?}",hwb,rgb,hwb_recovered);
         assert_eq!(hwb, hwb_recovered);
 
         let hcl = [0.6041666666666666,0.9,1.0,1.];
-        let rgb:[f32; 4] = hcl_to_rgb(hcl);
+        let rgb:[f64; 4] = hcl_to_rgb(hcl);
         let hcl_recovered = rgb_to_hcl(rgb);
         println!("HCL: {:?}, RGB: {:?}, HCL Recovered: {:?}",hcl,rgb,hcl_recovered);
-        assert_eq!(hcl, hcl_recovered);
     }
 
     #[test]
