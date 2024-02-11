@@ -373,9 +373,9 @@ fn lab_to_rgb(components: [f64; 4]) -> [f64; 4] {
 
 //From RGBA
 fn rgb_to_cmyk(components: [f64; 4]) -> [f64; 4] {
-    let (r,g,b,alpha) = components.into();
+    let (r,g,b,_) = components.into();
     let black = [1.-r,1.-g,1.-b].min_value();
-    [(1.-r-black)/(1.-black),(1.-g-black)/(1.-black),(1.-b-black)/(1.-black),alpha]
+    [(1.-r-black)/(1.-black),(1.-g-black)/(1.-black),(1.-b-black)/(1.-black),black]
 }
 
 fn rgb_to_rgbw(components: [f64; 4]) -> [f64; 4] {
