@@ -6,7 +6,7 @@ use num_traits::{AsPrimitive, Unsigned, PrimInt};
 
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub struct Color{
-    components: [f64;4],
+    components: [f64;4],//maybe make a fixed point library in the future
     color_type: ColorType,
 }
 
@@ -33,11 +33,11 @@ enum ColorType {
     HSVA,
     CubicHWBA,
     //2D Hue
-    YUVA,
+    // YUVA,
 
     //La*b*
-    LabHCLA,
-    LabA,
+    // LabHCLA,
+    // LabA,
 
 }
 //Alpha could be used for specular color
@@ -91,9 +91,9 @@ impl Color {
             ColorType::HSLA => hsl_to_rgb(self.components),
             ColorType::HSVA => hsv_to_rgb(self.components),
             ColorType::CubicHWBA => cubic_hwb_to_rgb(self.components),
-            ColorType::YUVA => yuv_to_rgb(self.components),
-            ColorType::LabHCLA => lch_to_rgb(self.components),
-            ColorType::LabA => lab_to_rgb(self.components),
+            // ColorType::YUVA => yuv_to_rgb(self.components),
+            // ColorType::LabHCLA => lch_to_rgb(self.components),
+            // ColorType::LabA => lab_to_rgb(self.components),
         };
         Color { components, color_type: ColorType::RGBA}
     }
@@ -138,144 +138,150 @@ impl Color {
 
 
 
-    // pub fn to_integers<T>(&self, scale: Option<T>) -> (T, T, T)
-    //     where
-    //         T: Unsigned + PrimInt + AsPrimitive<f64> + 'static,
-    //         f64: AsPrimitive<T>,
-    // {
-    //     let scale_value = scale.unwrap_or(T::max_value()).to_f64().unwrap();
+    fn to_integers<T>(&self, scale: Option<T>) -> [T;4]
+        where
+            T: Unsigned + PrimInt + AsPrimitive<f64> + 'static,
+            f64: AsPrimitive<T>,
+    {
+        let scale_value = scale.unwrap_or(T::max_value()).to_f64().unwrap();
 
-    //     let r = (self.r * scale_value).round().as_();
-    //     let g = (self.g * scale_value).round().as_();
-    //     let b = (self.b * scale_value).round().as_();
+        let a = (self.components[0] * scale_value).round().as_();
+        let b = (self.components[1] * scale_value).round().as_();
+        let c = (self.components[2] * scale_value).round().as_();
+        let d = (self.components[3] * scale_value).round().as_();
 
-    //     return (r,g,b)
-    // }  
-    // pub fn to_8bit_rgba(&self) -> u32{
-    //     let (r,g,b) = self.to_integers::<u8>(Some(255));
-    //     let (r,g,b) = (r as u32, g as u32, b as u32);
-    //     return (r << 24) + (g << 16) + (b << 8) + 255;
-    // }
+        return [a,b,c,d]
+    }  
+    pub fn to_8bit(&self) -> u32{
+        let (a,b,c,d) = self.to_integers::<u8>(Some(255)).into();
+        let (a,b,c,d) = (a as u32, b as u32, c as u32, d as u32);
+        return (a << 24) + (b << 16) + (c << 8) + d;
+    }
 
-    pub const TRANSPARENT: Color = Color{components: [0.,0.,0.,0.], color_type: ColorType::SphericalHWBA };
-    pub const WHITE: Color = Color::hwb(0.,1.,0.);
-    pub const BLACK: Color = Color::hwb(0.,0.,1.);
-    pub const GREY: Color = Color::hwb(0.,0.5,0.5);
+    pub const TRANSPARENT:  Color = Color{components: [0.,0.,0.,0.], color_type: ColorType::SphericalHWBA };
+    pub const WHITE:        Color = Color::hwb(0.,1.,0.);
+    pub const BLACK:        Color = Color::hwb(0.,0.,1.);
+    pub const GREY:         Color = Color::hwb(0.,0.5,0.5);
 
-    pub const RED: Color = Color::hwb(0.,0.,0.);
-    pub const SALMON: Color = Color::hwb(0.,0.5,0.);
-    pub const MAROON: Color = Color::hwb(0.,0.,0.5);
-    pub const BURGUNDY: Color = Color::hwb(0.,0.25,0.25);
+    pub const RED:          Color = Color::hwb(0./360.,0.,0.);
+    pub const SALMON:       Color = Color::hwb(0./360.,0.5,0.);
+    pub const MAROON:       Color = Color::hwb(0./360.,0.,0.5);
+    pub const BURGUNDY:     Color = Color::hwb(0./360.,0.25,0.25);
 
-    pub const VERMILLION: Color = Color::hwb(0.,0.,0.);
-    pub const PEACH: Color = Color::hwb(0.,0.5,0.);
-    pub const AUBURN: Color = Color::hwb(0.,0.,0.5);
-    pub const UMBER: Color = Color::hwb(0.,0.25,0.25);
+    pub const VERMILLION:   Color = Color::hwb(15./360.,0.,0.);
+    pub const PEACH:        Color = Color::hwb(15./360.,0.5,0.);
+    pub const AUBURN:       Color = Color::hwb(15./360.,0.,0.5);
+    pub const UMBER:        Color = Color::hwb(15./360.,0.25,0.25);
 
-    pub const ORANGE: Color = Color::hwb(0.,0.,0.);
-    pub const TAN: Color = Color::hwb(0.,0.5,0.);
-    pub const BROWN: Color = Color::hwb(0.,0.,0.5);
-    pub const BEIGE: Color = Color::hwb(0.,0.25,0.25);
+    pub const ORANGE:       Color = Color::hwb(30./360.,0.,0.);
+    pub const TAN:          Color = Color::hwb(30./360.,0.5,0.);
+    pub const BROWN:        Color = Color::hwb(30./360.,0.,0.5);
+    pub const BEIGE:        Color = Color::hwb(30./360.,0.25,0.25);
 
-    pub const AMBER: Color = Color::hwb(0.,0.,0.);
-    pub const STRAW: Color = Color::hwb(0.,0.5,0.);
-    pub const CARAMEL: Color = Color::hwb(0.,0.,0.5);
-    pub const SAFFRON: Color = Color::hwb(0.,0.25,0.25);
+    pub const AMBER:        Color = Color::hwb(45./360.,0.,0.);
+    pub const STRAW:        Color = Color::hwb(45./360.,0.5,0.);
+    pub const CARAMEL:      Color = Color::hwb(45./360.,0.,0.5);
+    pub const SAFFRON:      Color = Color::hwb(45./360.,0.25,0.25);
 
-    pub const YELLOW: Color = Color::hwb(0.,0.,0.);
-    pub const LEMON: Color = Color::hwb(0.,0.5,0.);
-    pub const DRAB: Color = Color::hwb(0.,0.,0.5);
-    pub const MUSTARD: Color = Color::hwb(0.,0.25,0.25);
+    pub const YELLOW:       Color = Color::hwb(60./360.,0.,0.);
+    pub const LEMON:        Color = Color::hwb(60./360.,0.5,0.);
+    pub const DRAB:         Color = Color::hwb(60./360.,0.,0.5);
+    pub const MUSTARD:      Color = Color::hwb(60./360.,0.25,0.25);
 
-    pub const VIRELL: Color = Color::hwb(0.,0.,0.);
-    pub const BECQUEREL: Color = Color::hwb(0.,0.5,0.);
-    pub const OLIVE: Color = Color::hwb(0.,0.,0.5);
-    pub const PICKLE: Color = Color::hwb(0.,0.25,0.25);
+    pub const VIRELL:       Color = Color::hwb(75./360.,0.,0.);
+    pub const BECQUEREL:    Color = Color::hwb(75./360.,0.5,0.);
+    pub const OLIVE:        Color = Color::hwb(75./360.,0.,0.5);
+    pub const PICKLE:       Color = Color::hwb(75./360.,0.25,0.25);
 
-    pub const CHARTREUSE: Color = Color::hwb(0.,0.,0.);
-    pub const VIRIDINE: Color = Color::hwb(0.,0.5,0.);
-    pub const FERN: Color = Color::hwb(0.,0.,0.5);
-    pub const PERIDOT: Color = Color::hwb(0.,0.25,0.25);
+    pub const CHARTREUSE:   Color = Color::hwb(90./360.,0.,0.);
+    pub const VIRIDINE:     Color = Color::hwb(90./360.,0.5,0.);
+    pub const FERN:         Color = Color::hwb(90./360.,0.,0.5);
+    pub const PERIDOT:      Color = Color::hwb(90./360.,0.25,0.25);
     
-    pub const LIME: Color = Color::hwb(0.,0.,0.);
-    pub const PALMETTO: Color = Color::hwb(0.,0.5,0.);
-    pub const MOSS: Color = Color::hwb(0.,0.,0.5);
-    pub const PETRICHOR: Color = Color::hwb(0.,0.25,0.25);
+    pub const LIME:         Color = Color::hwb(105./360.,0.,0.);
+    pub const PALMETTO:     Color = Color::hwb(105./360.,0.5,0.);
+    pub const MOSS:         Color = Color::hwb(105./360.,0.,0.5);
+    pub const PETRICHOR:    Color = Color::hwb(105./360.,0.25,0.25);
 
-    pub const GREEN: Color = Color::hwb(0.,0.,0.);
-    pub const WILLOW: Color = Color::hwb(0.,0.5,0.);
-    pub const FOREST: Color = Color::hwb(0.,0.,0.5);
-    pub const SAGE: Color = Color::hwb(0.,0.25,0.25);
+    pub const GREEN:        Color = Color::hwb(120./360.,0.,0.);
+    pub const WILLOW:       Color = Color::hwb(120./360.,0.5,0.);
+    pub const FOREST:       Color = Color::hwb(120./360.,0.,0.5);
+    pub const SAGE:         Color = Color::hwb(120./360.,0.25,0.25);
 
-    pub const EMERALD: Color = Color::hwb(0.,0.,0.);
-    pub const HONEYDEW: Color = Color::hwb(0.,0.5,0.);
-    pub const ERIN: Color = Color::hwb(0.,0.,0.5);
-    pub const CLOVER: Color = Color::hwb(0.,0.25,0.25);
+    pub const EMERALD:      Color = Color::hwb(135./360.,0.,0.);
+    pub const HONEYDEW:     Color = Color::hwb(135./360.,0.5,0.);
+    pub const ERIN:         Color = Color::hwb(135./360.,0.,0.5);
+    pub const CLOVER:       Color = Color::hwb(135./360.,0.25,0.25);
 
-    pub const MINT: Color = Color::hwb(0.,0.,0.);
-    pub const CELADON: Color = Color::hwb(0.,0.5,0.);
-    pub const CONIFER: Color = Color::hwb(0.,0.,0.5);
-    pub const JADE: Color = Color::hwb(0.,0.25,0.25);
+    pub const MINT:         Color = Color::hwb(150./360.,0.,0.);
+    pub const CELADON:      Color = Color::hwb(150./360.,0.5,0.);
+    pub const CONIFER:      Color = Color::hwb(150./360.,0.,0.5);
+    pub const JADE:         Color = Color::hwb(150./360.,0.25,0.25);
 
-    pub const TURQUOISE: Color = Color::hwb(0.,0.,0.);
-    pub const SEAFOAM: Color = Color::hwb(0.,0.5,0.);
-    pub const TEAL: Color = Color::hwb(0.,0.,0.5);
-    pub const VERDIGRIS: Color = Color::hwb(0.,0.25,0.25);
+    pub const TURQUOISE:    Color = Color::hwb(165./360.,0.,0.);
+    pub const SEAFOAM:      Color = Color::hwb(165./360.,0.5,0.);
+    pub const TEAL:         Color = Color::hwb(165./360.,0.,0.5);
+    pub const VERDIGRIS:    Color = Color::hwb(165./360.,0.25,0.25);
 
-    pub const CAPRI: Color = Color::hwb(0.,0.,0.);
-    pub const CELESTE: Color = Color::hwb(0.,0.5,0.);
-    pub const MARINE: Color = Color::hwb(0.,0.,0.5);
-    pub const AEGEAN: Color = Color::hwb(0.,0.25,0.25);
+    pub const CYAN:         Color = Color::hwb(180./360.,0.,0.);
+    pub const AQUA:         Color = Color::hwb(180./360.,0.5,0.);
+    pub const DELUGE:       Color = Color::hwb(180./360.,0.,0.5);
+    pub const AGAVE:        Color = Color::hwb(180./360.,0.25,0.25);
 
-    pub const AZURE: Color = Color::hwb(0.,0.,0.);
-    pub const CORNFLOWER: Color = Color::hwb(0.,0.5,0.);
-    pub const PRUSSIAN: Color = Color::hwb(0.,0.,0.5);
-    pub const DENIM: Color = Color::hwb(0.,0.25,0.25);
+    pub const CAPRI:        Color = Color::hwb(195./360.,0.,0.);
+    pub const CELESTE:      Color = Color::hwb(195./360.,0.5,0.);
+    pub const MARINE:       Color = Color::hwb(195./360.,0.,0.5);
+    pub const AEGEAN:       Color = Color::hwb(195./360.,0.25,0.25);
 
-    pub const CERULEAN: Color = Color::hwb(0.,0.,0.);
-    pub const BONNET: Color = Color::hwb(0.,0.5,0.);
-    pub const COBALT: Color = Color::hwb(0.,0.,0.5);
-    pub const HADAL: Color = Color::hwb(0.,0.25,0.25);
+    pub const AZURE:        Color = Color::hwb(210./360.,0.,0.);
+    pub const CORNFLOWER:   Color = Color::hwb(210./360.,0.5,0.);
+    pub const PRUSSIAN:     Color = Color::hwb(210./360.,0.,0.5);
+    pub const DENIM:        Color = Color::hwb(210./360.,0.25,0.25);
 
-    pub const BLUE: Color = Color::hwb(0.,0.,0.);
-    pub const PERIWINKLE: Color = Color::hwb(0.,0.5,0.);
-    pub const NAVY: Color = Color::hwb(0.,0.,0.5);
-    pub const SAPPHIRE: Color = Color::hwb(0.,0.25,0.25);
+    pub const CERULEAN:     Color = Color::hwb(225./360.,0.,0.);
+    pub const BONNET:       Color = Color::hwb(225./360.,0.5,0.);
+    pub const COBALT:       Color = Color::hwb(225./360.,0.,0.5);
+    pub const HADAL:        Color = Color::hwb(225./360.,0.25,0.25);
 
-    pub const INDIGO: Color = Color::hwb(0.,0.,0.);
-    pub const HYACINTH: Color = Color::hwb(0.,0.5,0.);
-    pub const SODALITE: Color = Color::hwb(0.,0.,0.5);
-    pub const CONCORD: Color = Color::hwb(0.,0.25,0.25);
+    pub const BLUE:         Color = Color::hwb(240./360.,0.,0.);
+    pub const PERIWINKLE:   Color = Color::hwb(240./360.,0.5,0.);
+    pub const NAVY:         Color = Color::hwb(240./360.,0.,0.5);
+    pub const SAPPHIRE:     Color = Color::hwb(240./360.,0.25,0.25);
 
-    pub const VIOLET: Color = Color::hwb(0.,0.,0.);
-    pub const LAVENDER: Color = Color::hwb(0.,0.5,0.);
-    pub const PRUNE: Color = Color::hwb(0.,0.,0.5);
-    pub const VERONICA: Color = Color::hwb(0.,0.25,0.25);
+    pub const INDIGO:       Color = Color::hwb(255./360.,0.,0.);
+    pub const HYACINTH:     Color = Color::hwb(255./360.,0.5,0.);
+    pub const SODALITE:     Color = Color::hwb(255./360.,0.,0.5);
+    pub const CONCORD:      Color = Color::hwb(255./360.,0.25,0.25);
 
-    pub const PURPLE: Color = Color::hwb(0.,0.,0.);
-    pub const LILAC: Color = Color::hwb(0.,0.5,0.);
-    pub const AMETHYST: Color = Color::hwb(0.,0.,0.5);
-    pub const UBE: Color = Color::hwb(0.,0.25,0.25);
+    pub const VIOLET:       Color = Color::hwb(270./360.,0.,0.);
+    pub const LAVENDER:     Color = Color::hwb(270./360.,0.5,0.);
+    pub const PRUNE:        Color = Color::hwb(270./360.,0.,0.5);
+    pub const VERONICA:     Color = Color::hwb(270./360.,0.25,0.25);
 
-    pub const MAGENTA: Color = Color::hwb(300./360.,0.,0.);
-    pub const PHLOX: Color = Color::hwb(300./360.,0.5,0.);
-    pub const AUBERGINE: Color = Color::hwb(300./360.,0.,0.5);
-    pub const MAUVE: Color = Color::hwb(300./360.,0.25,0.25);
+    pub const PURPLE:       Color = Color::hwb(285./360.,0.,0.);
+    pub const LILAC:        Color = Color::hwb(285./360.,0.5,0.);
+    pub const AMETHYST:     Color = Color::hwb(285./360.,0.,0.5);
+    pub const UBE:          Color = Color::hwb(285./360.,0.25,0.25);
 
-    pub const FUSCHIA: Color = Color::hwb(315./360.,0.,0.);
-    pub const BUBBLEGUM: Color = Color::hwb(315./360.,0.5,0.);
-    pub const PLUM: Color = Color::hwb(315./360.,0.,0.5);
-    pub const THISTLE: Color = Color::hwb(315./360.,0.25,0.25);
+    pub const MAGENTA:      Color = Color::hwb(300./360.,0.,0.);
+    pub const PHLOX:        Color = Color::hwb(300./360.,0.5,0.);
+    pub const AUBERGINE:    Color = Color::hwb(300./360.,0.,0.5);
+    pub const MAUVE:        Color = Color::hwb(300./360.,0.25,0.25);
 
-    pub const ROSE: Color = Color::hwb(330./360.,0.,0.);
-    pub const PINK: Color = Color::hwb(330./360.,0.5,0.);
-    pub const CLARET: Color = Color::hwb(330./360.,0.,0.5);
-    pub const RASPBERRY: Color = Color::hwb(330./360.,0.25,0.25);
+    pub const FUSCHIA:      Color = Color::hwb(315./360.,0.,0.);
+    pub const BUBBLEGUM:    Color = Color::hwb(315./360.,0.5,0.);
+    pub const PLUM:         Color = Color::hwb(315./360.,0.,0.5);
+    pub const THISTLE:      Color = Color::hwb(315./360.,0.25,0.25);
 
-    pub const RUBY: Color = Color::hwb(345./360.,0.,0.);
-    pub const STRAWBERRY: Color = Color::hwb(345./360.,0.5,0.);
-    pub const CRIMSON: Color = Color::hwb(345./360.,0.,0.5);
-    pub const CERISE: Color = Color::hwb(345./360.,0.25,0.25);
+    pub const ROSE:         Color = Color::hwb(330./360.,0.,0.);
+    pub const PINK:         Color = Color::hwb(330./360.,0.5,0.);
+    pub const AMARANTH:       Color = Color::hwb(330./360.,0.,0.5);
+    pub const RASPBERRY:    Color = Color::hwb(330./360.,0.25,0.25);
+
+    pub const RUBY:         Color = Color::hwb(345./360.,0.,0.);
+    pub const STRAWBERRY:   Color = Color::hwb(345./360.,0.5,0.);
+    pub const CRIMSON:      Color = Color::hwb(345./360.,0.,0.5);
+    pub const CERISE:       Color = Color::hwb(345./360.,0.25,0.25);
 
     //pub fn fmt_hex()
 
@@ -334,21 +340,22 @@ fn hsl_to_rgb(components: [f64; 4]) -> [f64; 4] {
 
 fn hsv_to_rgb(hsv: [f64;4]) -> [f64;4] {
     let (hue, saturation, value, alpha) = hsv.into();
-    let h = (hue * 6.).round() as u16 % 6;
+    let h = hue * 6.;
+    let h_int = h as u8;
     let c = value * saturation;
-    let x = c * (1. - f64::abs((h as f64) % 2. - 1.));
-    let m = value - c;
+    let max = value;
+    let min = max - c;
 
-    let (r,g,b) = match h {
-        0 => (c,x,0.),
-        1 => (x,c,0.),
-        2 => (0.,c,x),
-        3 => (0.,x,c),
-        4 => (x,0.,c),
-        _ => (c,0.,x),
+    let (r,g,b) = match h_int {
+        0 => (max,min+h*c,min),
+        1 => (min-(h-2.)*c,max,min),
+        2 => (min,max,min+(h-2.)*c),
+        3 => (min,min-(h-4.)*c,max),
+        4 => (min+(h-4.)*c,min,max),
+        _ => (max,min,min-(h-4.)*c),
 
     };
-    [r+m,g+m,b+m,alpha]
+    [r,g,b,alpha]
 }
 
 fn cubic_hwb_to_rgb(hwb: [f64;4]) -> [f64;4] {
@@ -359,17 +366,17 @@ fn cubic_hwb_to_rgb(hwb: [f64;4]) -> [f64;4] {
     hsv_to_rgb(hsv)
 }
 
-fn yuv_to_rgb(components: [f64; 4]) -> [f64; 4] {
-    todo!()
-}
+// fn yuv_to_rgb(components: [f64; 4]) -> [f64; 4] {
+//     todo!()
+// }
 
-fn lch_to_rgb(components: [f64; 4]) -> [f64; 4] {
-    todo!()
-}
+// fn lch_to_rgb(components: [f64; 4]) -> [f64; 4] {
+//     todo!()
+// }
 
-fn lab_to_rgb(components: [f64; 4]) -> [f64; 4] {
-    todo!()
-}
+// fn lab_to_rgb(components: [f64; 4]) -> [f64; 4] {
+//     todo!()
+// }
 
 //From RGBA
 fn rgb_to_cmyk(components: [f64; 4]) -> [f64; 4] {
@@ -422,7 +429,6 @@ fn rgb_to_spherical_hwb(rgb: [f64;4]) -> [f64;4] {
     [h,1.-c,1.-l,a]
 }
 
-
 fn rgb_to_cubic_hwb(rgb: [f64;4]) -> [f64;4] {
     let (h,s,v,a) = rgb_to_hsv(rgb).into();
     let w = (1.-s) * v;
@@ -431,8 +437,30 @@ fn rgb_to_cubic_hwb(rgb: [f64;4]) -> [f64;4] {
 } 
 
 fn rgb_to_hsl(rgb: [f64;4]) -> [f64;4] {
-    panic!("Not finished");
-    //return [0.,0.,0.,0.]
+    let (r,g,b,alpha) = rgb.into();
+    let min = [r,g,b].min_value();
+    let max = [r,g,b].max_value();
+    let chroma = max - min;
+    let index = rgb.index_of(max);
+
+    let lightness = (max + min) / 2.;
+
+    let saturation = 
+    if lightness < 0.5 { chroma / (max + min)} else {chroma / (2. - chroma)}; 
+
+    let hue =
+    if chroma == 0. {
+        0.
+    }
+    else{
+        match index {
+            0 => ((g - b) / chroma + 0.) / 6.,
+            1 => ((b - r) / chroma + 2.) / 6.,
+            _ => ((r - g) / chroma + 4.) / 6.,
+        }
+    };
+
+    [hue,saturation,lightness,alpha]
 }
 
 fn rgb_to_hsv(rgba: [f64;4]) -> [f64;4] {
@@ -632,22 +660,27 @@ mod tests {
 
     #[test]
     fn test_conversions(){
-        let hsv = [0.5,1.0,0.5,1.];
+        let hsv = [210./360.,1.,1.,1.];
         let rgb:[f64; 4] = hsv_to_rgb(hsv);
         let hsv_recovered = rgb_to_hsv(rgb);
         println!("HSV: {:?}, RGB: {:?}, HSV Recovered: {:?}",hsv,rgb,hsv_recovered);
         assert_eq!(hsv, hsv_recovered);
 
-        let hwb = [0.5,0.5,0.0,1.];//Won't hold true for values in grey
+        let hwb = [30./360.,0.,0.,1.];//Won't hold true for values in grey
         let rgb:[f64; 4] = cubic_hwb_to_rgb(hwb);
         let hwb_recovered = rgb_to_cubic_hwb(rgb);
         println!("HWB: {:?}, RGB: {:?}, HWB Recovered: {:?}",hwb,rgb,hwb_recovered);
         assert_eq!(hwb, hwb_recovered);
 
-        let hcl = [0.6041666666666666,0.9,1.0,1.];
+        let hcl = [30./360.,1.,1.,1.];
         let rgb:[f64; 4] = hcl_to_rgb(hcl);
         let hcl_recovered = rgb_to_hcl(rgb);
         println!("HCL: {:?}, RGB: {:?}, HCL Recovered: {:?}",hcl,rgb,hcl_recovered);
+
+        let hsl = [30./360.,1.,0.0,1.];
+        let rgb:[f64; 4] = [1.,0.5,0.,1.];//hsl_to_rgb(hsl);
+        let hsl_recovered = rgb_to_hsl(rgb);
+        println!("HSL: {:?}, RGB: {:?}, HSL Recovered: {:?}",hsl,rgb,hsl_recovered);
     }
 
     #[test]
