@@ -267,8 +267,8 @@ impl Color {
     pub const PLUM: Color = Color::hwb(315./360.,0.,0.5);
     pub const THISTLE: Color = Color::hwb(315./360.,0.25,0.25);
 
-    pub const PINK: Color = Color::hwb(330./360.,0.,0.);
-    pub const ROSE: Color = Color::hwb(330./360.,0.5,0.);
+    pub const ROSE: Color = Color::hwb(330./360.,0.,0.);
+    pub const PINK: Color = Color::hwb(330./360.,0.5,0.);
     pub const CLARET: Color = Color::hwb(330./360.,0.,0.5);
     pub const RASPBERRY: Color = Color::hwb(330./360.,0.25,0.25);
 
@@ -373,8 +373,9 @@ fn lab_to_rgb(components: [f64; 4]) -> [f64; 4] {
 
 //From RGBA
 fn rgb_to_cmyk(components: [f64; 4]) -> [f64; 4] {
-    // 1.-max
-    todo!()
+    let (r,g,b,alpha) = components.into();
+    let black = [1.-r,1.-g,1.-b].min_value();
+    [(1.-r-black)/(1.-black),(1.-g-black)/(1.-black),(1.-b-black)/(1.-black),alpha]
 }
 
 fn rgb_to_rgbw(components: [f64; 4]) -> [f64; 4] {
