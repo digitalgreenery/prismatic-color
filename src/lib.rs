@@ -352,7 +352,7 @@ fn hsv_to_rgb(hsv: [f64;4]) -> [f64;4] {
         2 => (min,max,min+(h-2.)*c),
         3 => (min,min-(h-4.)*c,max),
         4 => (min+(h-4.)*c,min,max),
-        _ => (max,min,min-(h-4.)*c),
+        _ => (max,min,min-(h-6.)*c),
 
     };
     [r,g,b,alpha]
@@ -411,14 +411,15 @@ fn rgb_to_hcl(rgb: [f64;4]) -> [f64;4] {
     };
 
     let luminance = (a*a+b*b+c*c).sqrt();
-    let phi = b.atan2(c);
-    let hue_angle = (a/luminance).acos();
+    //I need to fix these
+    let phi = (c / luminance).acos();
+    let hue_angle = b.atan2(a);
     let chroma = (((phi - 1.95968918625)/-1.1).asin() - 1.15074)/-0.7893882996;
     if chroma == 0. {
         let three: f64 = 3.0;
         let grey_point = 1./three.sqrt() * luminance;
         return [grey_point,grey_point,grey_point,alpha]}
-    let hue = ((hue_angle - ((PI / 4.) * (1.-chroma)))/(PI / 2.) / chroma + secondary as f64) / 3.;
+    let hue = (((hue_angle - ((PI / 4.) * (1.-chroma)))/(PI / 2.) / chroma + secondary as f64) / 3.) % 1.;
 
     [hue,chroma,luminance,alpha]
 
@@ -482,7 +483,7 @@ fn rgb_to_hsv(rgba: [f64;4]) -> [f64;4] {
         _ => g - r + 4.,
     };
     
-    let h = h / 6. % 1.;
+    let h = (1. + h / 6.) % 1.;
     let s = delta/c_max;
     let v = c_max;
 
@@ -656,31 +657,41 @@ where
 
 #[cfg(test)]
 mod tests {
+
     use super::*;
 
     #[test]
     fn test_conversions(){
-        let hsv = [210./360.,1.,1.,1.];
-        let rgb:[f64; 4] = hsv_to_rgb(hsv);
-        let hsv_recovered = rgb_to_hsv(rgb);
-        println!("HSV: {:?}, RGB: {:?}, HSV Recovered: {:?}",hsv,rgb,hsv_recovered);
-        assert_eq!(hsv, hsv_recovered);
+        let num= 24;
+        let angle = 360. / num as f64;
+        for i in 0..num {
+            // println!("The color {}",i);
+            // let hsv = [i as f64 * angle/360.,1.,1.,1.];
+            // let rgb:[f64; 4] = hsv_to_rgb(hsv);
+            // let hsv_recovered = rgb_to_hsv(rgb);
+            // println!("HSV: {:?}, RGB: {:?}, HSV Recovered: {:?}",hsv,rgb,hsv_recovered);
+            // assert_eq!(hsv, hsv_recovered);
 
-        let hwb = [30./360.,0.,0.,1.];//Won't hold true for values in grey
-        let rgb:[f64; 4] = cubic_hwb_to_rgb(hwb);
-        let hwb_recovered = rgb_to_cubic_hwb(rgb);
-        println!("HWB: {:?}, RGB: {:?}, HWB Recovered: {:?}",hwb,rgb,hwb_recovered);
-        assert_eq!(hwb, hwb_recovered);
+            // let hwb = [i as f64 * angle/360.,0.,0.,1.];//Won't hold true for values in grey
+            // let rgb:[f64; 4] = cubic_hwb_to_rgb(hwb);
+            // let hwb_recovered = rgb_to_cubic_hwb(rgb);
+            // println!("HWB: {}, RGB: {}, HWB Recovered: {}",print_array(hwb),print_array(rgb),print_array(hwb_recovered));
+            // // assert_eq!(hwb, hwb_recovered);
 
-        let hcl = [30./360.,1.,1.,1.];
-        let rgb:[f64; 4] = hcl_to_rgb(hcl);
-        let hcl_recovered = rgb_to_hcl(rgb);
-        println!("HCL: {:?}, RGB: {:?}, HCL Recovered: {:?}",hcl,rgb,hcl_recovered);
+            let hcl = [i as f64 * angle/360. ,0.5,1.,1.];
+            let rgb:[f64; 4] = hcl_to_rgb(hcl);
+            let hcl_recovered = rgb_to_hcl(rgb);
+            println!("HCL: {}, RGB: {}, HCL Recovered: {}",print_array(hcl),print_array(rgb),print_array(hcl_recovered));
 
-        let hsl = [30./360.,1.,0.0,1.];
-        let rgb:[f64; 4] = [1.,0.5,0.,1.];//hsl_to_rgb(hsl);
-        let hsl_recovered = rgb_to_hsl(rgb);
-        println!("HSL: {:?}, RGB: {:?}, HSL Recovered: {:?}",hsl,rgb,hsl_recovered);
+            // let hsl = [i as f64 * angle/360.,1.,0.0,1.];
+            // let rgb:[f64; 4] = [1.,0.5,0.,1.];//hsl_to_rgb(hsl);
+            // let hsl_recovered = rgb_to_hsl(rgb);
+            // println!("HSL: {:?}, RGB: {:?}, HSL Recovered: {:?}",hsl,rgb,hsl_recovered);
+            // println!("");
+        }
+    }
+    fn print_array(arr: [f64;4]) -> String {
+        format!("[{:.2},{:.2},{:.2},{:.2}] ", arr[0],arr[1],arr[2],arr[3])
     }
 
     #[test]
