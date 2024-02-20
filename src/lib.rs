@@ -527,15 +527,26 @@ impl ArrayExt for [f64] {
 }
 
 #[derive(Clone, Copy)]
-pub enum NormalCurve {
+enum NormalCurve {
     Linear,
     Power(f64),
     Quadratiic(f64,f64),
     Cubic(f64,f64,f64,f64),
 }
 
+impl NormalCurve{
+    fn gamma(gamma_power: f64) -> NormalCurve{
+        Self::Power(gamma_power)
+    }
+}
+
 struct ComposedMapping {
     curves: [Vec<(NormalCurve, f64, f64)>;4],
+}
+impl ComposedMapping{
+    fn add_curves(curves: Vec<NormalCurve>) -> ComposedMapping{
+        todo!();
+    }
 }
 
 
@@ -543,11 +554,15 @@ pub struct DefinedColor {
     color: Color,
     mapping_curve: ComposedMapping,
 }
-
-impl DefinedColor {
+impl DefinedColor{
     pub fn new_linear(color: Color) -> DefinedColor {
         DefinedColor { color: color, mapping_curve: ComposedMapping { curves: [vec!((NormalCurve::Linear,1.,1.)),vec!((NormalCurve::Linear,1.,1.)),vec!((NormalCurve::Linear,1.,1.)),vec!((NormalCurve::Linear,1.,1.))] } }
     }
+
+    pub fn gamma(color: Color, power: f64) -> DefinedColor{
+        todo!()
+    }
+    
 }
 
 // impl fmt::Display for Color {
