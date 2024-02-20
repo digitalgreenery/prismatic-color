@@ -306,7 +306,11 @@ fn cmyk_to_rgb(components: [f64; 4]) -> [f64; 4] {
 
 fn hcl_to_rgb(hcl: [f64;4]) -> [f64;4] {
     let (hue,chroma,luminance,alpha) = hcl.into();
-
+    if chroma == 0. {
+        let three: f64 = 3.0;
+        let grey_point = 1./three.sqrt() * luminance;
+        return [grey_point,grey_point,grey_point,alpha]
+    }
     //HCL approximate implementation of spherical RGB 
     //Spherical RGB has three sides: yellow, cyan, and magenta.
     //Phi is the angle towards the grey point for saturation.
@@ -415,10 +419,7 @@ fn rgb_to_hcl(rgb: [f64;4]) -> [f64;4] {
     let phi = (c / luminance).acos();
     let hue_angle = b.atan2(a);
     let chroma = (((phi - 1.95968918625)/-1.1).asin() - 1.15074)/-0.7893882996;
-    if chroma == 0. {
-        let three: f64 = 3.0;
-        let grey_point = 1./three.sqrt() * luminance;
-        return [grey_point,grey_point,grey_point,alpha]}
+    if set_to_zero_if_small(chroma) == 0. {return [0.,0.,luminance,alpha]}
     let hue = (((hue_angle - ((PI / 4.) * (1.-chroma)))/(PI / 2.) / chroma + secondary as f64) / 3.) % 1.;
 
     [hue,chroma,luminance,alpha]
@@ -678,7 +679,7 @@ mod tests {
             // println!("HWB: {}, RGB: {}, HWB Recovered: {}",print_array(hwb),print_array(rgb),print_array(hwb_recovered));
             // // assert_eq!(hwb, hwb_recovered);
 
-            let hcl = [i as f64 * angle/360. ,0.5,1.,1.];
+            let hcl = [0.5 ,i as f64 * angle/360.,1.,1.];
             let rgb:[f64; 4] = hcl_to_rgb(hcl);
             let hcl_recovered = rgb_to_hcl(rgb);
             println!("HCL: {}, RGB: {}, HCL Recovered: {}",print_array(hcl),print_array(rgb),print_array(hcl_recovered));
