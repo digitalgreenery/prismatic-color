@@ -534,19 +534,45 @@ enum NormalCurve {
     Cubic(f64,f64,f64,f64),
 }
 
-impl NormalCurve{
-    fn gamma(gamma_power: f64) -> NormalCurve{
-        Self::Power(gamma_power)
+trait Mapping {
+    fn map_curve(&self, curve: NormalCurve) -> f64;
+    fn quadratic_mapping(&self, x: f64, y: f64) -> f64;
+    fn cubic_mapping(&self, x1: f64, y1: f64, x2: f64, y2: f64) -> f64;
+}
+impl Mapping for f64 {
+    fn map_curve(&self, curve: NormalCurve) -> f64 {
+        match curve {
+            NormalCurve::Linear => *self,
+            NormalCurve::Power(a) => self.powf(a),
+            NormalCurve::Quadratiic(x,y) => self.quadratic_mapping(x,y),
+            NormalCurve::Cubic(x1,y1,x2,y2) => self.cubic_mapping(x1,y1,x2,y2),
+
+        }
     }
+    fn quadratic_mapping(&self, x: f64, y: f64) -> f64{
+        return 0.0;
+    }
+    fn cubic_mapping(&self, x1: f64, y1: f64, x2: f64, y2: f64) -> f64{
+        return 0.0;
+    }
+
 }
 
 struct ComposedMapping {
     curves: [Vec<(NormalCurve, f64, f64)>;4],
 }
 impl ComposedMapping{
-    fn add_curves(curves: Vec<NormalCurve>) -> ComposedMapping{
-        todo!();
+    fn simple_curve(normal_curve: NormalCurve) -> ComposedMapping{
+        ComposedMapping { curves: [vec![(normal_curve,1.,1.)],vec![(normal_curve,1.,1.)],vec![(normal_curve,1.,1.)],vec![(normal_curve,1.,1.)]] }
     }
+
+    fn multi_curve(normal_curve: [NormalCurve;4]) -> ComposedMapping{
+        ComposedMapping { curves: [vec![(normal_curve[0],1.,1.)],vec![(normal_curve[1],1.,1.)],vec![(normal_curve[2],1.,1.)],vec![(normal_curve[3],1.,1.)]] }
+    }
+
+    // fn complex_curve(normal_curve: [NormalCurve;4]) -> ComposedMapping{
+    //     ComposedMapping { curves: [vec![(normal_curve[0],1.,1.)],vec![(normal_curve[1],1.,1.)],vec![(normal_curve[2],1.,1.)],vec![(normal_curve[3],1.,1.)]] }
+    // }
 }
 
 
@@ -556,10 +582,26 @@ pub struct DefinedColor {
 }
 impl DefinedColor{
     pub fn new_linear(color: Color) -> DefinedColor {
-        DefinedColor { color: color, mapping_curve: ComposedMapping { curves: [vec!((NormalCurve::Linear,1.,1.)),vec!((NormalCurve::Linear,1.,1.)),vec!((NormalCurve::Linear,1.,1.)),vec!((NormalCurve::Linear,1.,1.))] } }
+        return DefinedColor { color: color  , mapping_curve: ComposedMapping::simple_curve(NormalCurve::Linear) };
     }
 
     pub fn gamma(color: Color, power: f64) -> DefinedColor{
+        return DefinedColor { color: color  , mapping_curve: ComposedMapping::simple_curve(NormalCurve::Power(1./power)) };
+    }
+
+    pub fn component_gamma(color: Color, power: [f64;4]) -> DefinedColor{
+        return DefinedColor { color: color  , mapping_curve: ComposedMapping::multi_curve([NormalCurve::Power(1./power[0]),NormalCurve::Power(1./power[1]),NormalCurve::Power(1./power[2]),NormalCurve::Power(1./power[3])]) };
+    }
+
+    pub fn quadratic(color: Color, x: f64, y: f64) -> DefinedColor{
+        return DefinedColor { color: color  , mapping_curve: ComposedMapping::simple_curve(NormalCurve::Quadratiic(x,y)) };
+    }
+
+    pub fn cubic(color: Color, x1: f64, y1: f64, x2: f64, y2: f64) -> DefinedColor{
+        return DefinedColor { color: color  , mapping_curve: ComposedMapping::simple_curve(NormalCurve::Cubic(x1,y1,x2,y2)) };
+    }
+
+    pub fn collapse_color(&self) -> Color{
         todo!()
     }
     
