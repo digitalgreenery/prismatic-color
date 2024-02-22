@@ -559,15 +559,19 @@ impl Mapping for f64 {
 }
 
 struct ComposedMapping {
-    curves: [Vec<(NormalCurve, f64, f64)>;4],
+    curve: Vec<(NormalCurve, f64, f64)>,
 }
 impl ComposedMapping{
     fn simple_curve(normal_curve: NormalCurve) -> ComposedMapping{
-        ComposedMapping { curves: [vec![(normal_curve,1.,1.)],vec![(normal_curve,1.,1.)],vec![(normal_curve,1.,1.)],vec![(normal_curve,1.,1.)]] }
+        ComposedMapping { curve: vec![(normal_curve,1.,1.)]}
     }
 
-    fn multi_curve(normal_curve: [NormalCurve;4]) -> ComposedMapping{
-        ComposedMapping { curves: [vec![(normal_curve[0],1.,1.)],vec![(normal_curve[1],1.,1.)],vec![(normal_curve[2],1.,1.)],vec![(normal_curve[3],1.,1.)]] }
+    fn simple_curve_array(normal_curve: NormalCurve) -> [ComposedMapping;4]{
+        [ComposedMapping { curve: vec![(normal_curve,1.,1.)]},ComposedMapping { curve: vec![(normal_curve,1.,1.)]},ComposedMapping { curve: vec![(normal_curve,1.,1.)]},ComposedMapping { curve: vec![(normal_curve,1.,1.)]}]
+    }
+
+    fn multi_curve_array(normal_curve: [NormalCurve;4]) -> [ComposedMapping;4]{
+        [ComposedMapping { curve: vec![(normal_curve[0],1.,1.)]},ComposedMapping { curve: vec![(normal_curve[1],1.,1.)]},ComposedMapping { curve: vec![(normal_curve[2],1.,1.)]},ComposedMapping { curve: vec![(normal_curve[3],1.,1.)]}]
     }
 
     // fn complex_curve(normal_curve: [NormalCurve;4]) -> ComposedMapping{
@@ -578,30 +582,33 @@ impl ComposedMapping{
 
 pub struct DefinedColor {
     color: Color,
-    mapping_curve: ComposedMapping,
+    mapping_curve: [ComposedMapping;4],
 }
 impl DefinedColor{
     pub fn new_linear(color: Color) -> DefinedColor {
-        return DefinedColor { color: color  , mapping_curve: ComposedMapping::simple_curve(NormalCurve::Linear) };
+        return DefinedColor { color: color, mapping_curve: ComposedMapping::simple_curve_array(NormalCurve::Linear)};
     }
 
     pub fn gamma(color: Color, power: f64) -> DefinedColor{
-        return DefinedColor { color: color  , mapping_curve: ComposedMapping::simple_curve(NormalCurve::Power(1./power)) };
+        return DefinedColor { color: color, mapping_curve: ComposedMapping::simple_curve_array(NormalCurve::Power(1./power))};        
     }
 
     pub fn component_gamma(color: Color, power: [f64;4]) -> DefinedColor{
-        return DefinedColor { color: color  , mapping_curve: ComposedMapping::multi_curve([NormalCurve::Power(1./power[0]),NormalCurve::Power(1./power[1]),NormalCurve::Power(1./power[2]),NormalCurve::Power(1./power[3])]) };
+        return DefinedColor { color: color  , mapping_curve: ComposedMapping::multi_curve_array([NormalCurve::Power(1./power[0]),NormalCurve::Power(1./power[1]),NormalCurve::Power(1./power[2]),NormalCurve::Power(1./power[3])]) };
     }
 
     pub fn quadratic(color: Color, x: f64, y: f64) -> DefinedColor{
-        return DefinedColor { color: color  , mapping_curve: ComposedMapping::simple_curve(NormalCurve::Quadratiic(x,y)) };
+        return DefinedColor { color: color  , mapping_curve: ComposedMapping::simple_curve_array(NormalCurve::Quadratiic(x,y)) };
     }
 
     pub fn cubic(color: Color, x1: f64, y1: f64, x2: f64, y2: f64) -> DefinedColor{
-        return DefinedColor { color: color  , mapping_curve: ComposedMapping::simple_curve(NormalCurve::Cubic(x1,y1,x2,y2)) };
+        return DefinedColor { color: color  , mapping_curve: ComposedMapping::simple_curve_array(NormalCurve::Cubic(x1,y1,x2,y2)) };
     }
 
     pub fn collapse_color(&self) -> Color{
+        if self.mapping_curve.len() == 1{
+                
+        }
         todo!()
     }
     
