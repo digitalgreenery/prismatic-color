@@ -615,8 +615,14 @@ impl Mapping for f64 {
             NormalCurve::Composed(curves) => self.composed_mapping(curves),
         }
     }
-    fn quadratic_mapping(self, x: f64, y: f64) -> f64 {
-        return 0.0;
+    fn quadratic_mapping(self, x1: f64, y1: f64) -> f64 {
+        if x1 == 0.5 {
+            return self * (self - 2. * y1 * (self - 1.))
+        }
+        else{
+            let m = (x1 - (x1 * x1 - 2. * x1 * self + self).sqrt())/(2. * x1 - 1.);
+            return 2. * (1. - m) * m * y1 + m.powi(2);
+        }
     }
     fn cubic_mapping(self, x1: f64, y1: f64, x2: f64, y2: f64) -> f64 {
         return 0.0;
