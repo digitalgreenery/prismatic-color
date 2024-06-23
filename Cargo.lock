@@ -24,7 +24,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "spherical_rgb"
+name = "rust_color"
 version = "0.1.3"
 dependencies = [
  "lazy_static",
