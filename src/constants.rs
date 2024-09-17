@@ -3,129 +3,129 @@ use crate::Color;
 use crate::ColorType;
 
 pub const TRANSPARENT: Color = Color {components: [0., 1., 0., 0.], color_type: ColorType::SphericalHWBA,};
-pub const WHITE: Color = Color::hwb(0., 1., 0.);
-pub const BLACK: Color = Color::hwb(0., 0., 1.);
-pub const GREY: Color = Color::hwb(0., 0.5, 0.5);
+pub const WHITE: Color = Color::spherical_hwb(0., 1., 0.);
+pub const BLACK: Color = Color::spherical_hwb(0., 0., 1.);
+pub const GREY: Color = Color::spherical_hwb(0., 0.5, 0.5);
 
-pub const RED: Color = Color::hwb(0. / 360., 0., 0.);
-pub const SALMON: Color = Color::hwb(0. / 360., 0.5, 0.);
-pub const MAROON: Color = Color::hwb(0. / 360., 0., 0.5);
-pub const BURGUNDY: Color = Color::hwb(0. / 360., 0.25, 0.25);
+pub const RED: Color = Color::spherical_hwb(0. / 360., 0., 0.);
+pub const SALMON: Color = Color::spherical_hwb(0. / 360., 0.5, 0.);
+pub const MAROON: Color = Color::spherical_hwb(0. / 360., 0., 0.5);
+pub const BURGUNDY: Color = Color::spherical_hwb(0. / 360., 0.25, 0.25);
 
-pub const VERMILLION: Color = Color::hwb(15. / 360., 0., 0.);
-pub const PEACH: Color = Color::hwb(15. / 360., 0.5, 0.);
-pub const AUBURN: Color = Color::hwb(15. / 360., 0., 0.5);
-pub const UMBER: Color = Color::hwb(15. / 360., 0.25, 0.25);
+pub const VERMILLION: Color = Color::spherical_hwb(15. / 360., 0., 0.);
+pub const PEACH: Color = Color::spherical_hwb(15. / 360., 0.5, 0.);
+pub const AUBURN: Color = Color::spherical_hwb(15. / 360., 0., 0.5);
+pub const UMBER: Color = Color::spherical_hwb(15. / 360., 0.25, 0.25);
 
-pub const ORANGE: Color = Color::hwb(30. / 360., 0., 0.);
-pub const TAN: Color = Color::hwb(30. / 360., 0.5, 0.);
-pub const BROWN: Color = Color::hwb(30. / 360., 0., 0.5);
-pub const BEIGE: Color = Color::hwb(30. / 360., 0.25, 0.25);
+pub const ORANGE: Color = Color::spherical_hwb(30. / 360., 0., 0.);
+pub const TAN: Color = Color::spherical_hwb(30. / 360., 0.5, 0.);
+pub const BROWN: Color = Color::spherical_hwb(30. / 360., 0., 0.5);
+pub const BEIGE: Color = Color::spherical_hwb(30. / 360., 0.25, 0.25);
 
-pub const AMBER: Color = Color::hwb(45. / 360., 0., 0.);
-pub const STRAW: Color = Color::hwb(45. / 360., 0.5, 0.);
-pub const CARAMEL: Color = Color::hwb(45. / 360., 0., 0.5);
-pub const SAFFRON: Color = Color::hwb(45. / 360., 0.25, 0.25);
+pub const AMBER: Color = Color::spherical_hwb(45. / 360., 0., 0.);
+pub const STRAW: Color = Color::spherical_hwb(45. / 360., 0.5, 0.);
+pub const CARAMEL: Color = Color::spherical_hwb(45. / 360., 0., 0.5);
+pub const SAFFRON: Color = Color::spherical_hwb(45. / 360., 0.25, 0.25);
 
-pub const YELLOW: Color = Color::hwb(60. / 360., 0., 0.);
-pub const LEMON: Color = Color::hwb(60. / 360., 0.5, 0.);
-pub const DRAB: Color = Color::hwb(60. / 360., 0., 0.5);
-pub const MUSTARD: Color = Color::hwb(60. / 360., 0.25, 0.25);
+pub const YELLOW: Color = Color::spherical_hwb(60. / 360., 0., 0.);
+pub const LEMON: Color = Color::spherical_hwb(60. / 360., 0.5, 0.);
+pub const DRAB: Color = Color::spherical_hwb(60. / 360., 0., 0.5);
+pub const MUSTARD: Color = Color::spherical_hwb(60. / 360., 0.25, 0.25);
 
-pub const BECQUEREL: Color = Color::hwb(75. / 360., 0., 0.);
-pub const VIRELL: Color = Color::hwb(75. / 360., 0.5, 0.);
-pub const OLIVE: Color = Color::hwb(75. / 360., 0., 0.5);
-pub const PICKLE: Color = Color::hwb(75. / 360., 0.25, 0.25);
+pub const BECQUEREL: Color = Color::spherical_hwb(75. / 360., 0., 0.);
+pub const VIRELL: Color = Color::spherical_hwb(75. / 360., 0.5, 0.);
+pub const OLIVE: Color = Color::spherical_hwb(75. / 360., 0., 0.5);
+pub const PICKLE: Color = Color::spherical_hwb(75. / 360., 0.25, 0.25);
 
-pub const CHARTREUSE: Color = Color::hwb(90. / 360., 0., 0.);
-pub const VIRIDINE: Color = Color::hwb(90. / 360., 0.5, 0.);
-pub const FERN: Color = Color::hwb(90. / 360., 0., 0.5);
-pub const PERIDOT: Color = Color::hwb(90. / 360., 0.25, 0.25);
+pub const CHARTREUSE: Color = Color::spherical_hwb(90. / 360., 0., 0.);
+pub const VIRIDINE: Color = Color::spherical_hwb(90. / 360., 0.5, 0.);
+pub const FERN: Color = Color::spherical_hwb(90. / 360., 0., 0.5);
+pub const PERIDOT: Color = Color::spherical_hwb(90. / 360., 0.25, 0.25);
 
-pub const LIME: Color = Color::hwb(105. / 360., 0., 0.);
-pub const PALMETTO: Color = Color::hwb(105. / 360., 0.5, 0.);
-pub const MOSS: Color = Color::hwb(105. / 360., 0., 0.5);
-pub const PETRICHOR: Color = Color::hwb(105. / 360., 0.25, 0.25);
+pub const LIME: Color = Color::spherical_hwb(105. / 360., 0., 0.);
+pub const PALMETTO: Color = Color::spherical_hwb(105. / 360., 0.5, 0.);
+pub const MOSS: Color = Color::spherical_hwb(105. / 360., 0., 0.5);
+pub const PETRICHOR: Color = Color::spherical_hwb(105. / 360., 0.25, 0.25);
 
-pub const GREEN: Color = Color::hwb(120. / 360., 0., 0.);
-pub const WILLOW: Color = Color::hwb(120. / 360., 0.5, 0.);
-pub const FOREST: Color = Color::hwb(120. / 360., 0., 0.5);
-pub const CLOVER: Color = Color::hwb(120. / 360., 0.25, 0.25);
+pub const GREEN: Color = Color::spherical_hwb(120. / 360., 0., 0.);
+pub const WILLOW: Color = Color::spherical_hwb(120. / 360., 0.5, 0.);
+pub const FOREST: Color = Color::spherical_hwb(120. / 360., 0., 0.5);
+pub const CLOVER: Color = Color::spherical_hwb(120. / 360., 0.25, 0.25);
 
-pub const EMERALD: Color = Color::hwb(135. / 360., 0., 0.);
-pub const HONEYDEW: Color = Color::hwb(135. / 360., 0.5, 0.);
-pub const ERIN: Color = Color::hwb(135. / 360., 0., 0.5);
-pub const SAGE: Color = Color::hwb(135. / 360., 0.25, 0.25);
+pub const EMERALD: Color = Color::spherical_hwb(135. / 360., 0., 0.);
+pub const HONEYDEW: Color = Color::spherical_hwb(135. / 360., 0.5, 0.);
+pub const ERIN: Color = Color::spherical_hwb(135. / 360., 0., 0.5);
+pub const SAGE: Color = Color::spherical_hwb(135. / 360., 0.25, 0.25);
 
-pub const MINT: Color = Color::hwb(150. / 360., 0., 0.);
-pub const CELADON: Color = Color::hwb(150. / 360., 0.5, 0.);
-pub const CONIFER: Color = Color::hwb(150. / 360., 0., 0.5);
-pub const JADE: Color = Color::hwb(150. / 360., 0.25, 0.25);
+pub const MINT: Color = Color::spherical_hwb(150. / 360., 0., 0.);
+pub const CELADON: Color = Color::spherical_hwb(150. / 360., 0.5, 0.);
+pub const CONIFER: Color = Color::spherical_hwb(150. / 360., 0., 0.5);
+pub const JADE: Color = Color::spherical_hwb(150. / 360., 0.25, 0.25);
 
-pub const TURQUOISE: Color = Color::hwb(165. / 360., 0., 0.);
-pub const SEAFOAM: Color = Color::hwb(165. / 360., 0.5, 0.);
-pub const TEAL: Color = Color::hwb(165. / 360., 0., 0.5);
-pub const VERDIGRIS: Color = Color::hwb(165. / 360., 0.25, 0.25);
+pub const TURQUOISE: Color = Color::spherical_hwb(165. / 360., 0., 0.);
+pub const SEAFOAM: Color = Color::spherical_hwb(165. / 360., 0.5, 0.);
+pub const TEAL: Color = Color::spherical_hwb(165. / 360., 0., 0.5);
+pub const VERDIGRIS: Color = Color::spherical_hwb(165. / 360., 0.25, 0.25);
 
-pub const CYAN: Color = Color::hwb(180. / 360., 0., 0.);
-pub const AQUA: Color = Color::hwb(180. / 360., 0.5, 0.);
-pub const DELUGE: Color = Color::hwb(180. / 360., 0., 0.5);
-pub const AGAVE: Color = Color::hwb(180. / 360., 0.25, 0.25);
+pub const CYAN: Color = Color::spherical_hwb(180. / 360., 0., 0.);
+pub const AQUA: Color = Color::spherical_hwb(180. / 360., 0.5, 0.);
+pub const DELUGE: Color = Color::spherical_hwb(180. / 360., 0., 0.5);
+pub const AGAVE: Color = Color::spherical_hwb(180. / 360., 0.25, 0.25);
 
-pub const CAPRI: Color = Color::hwb(195. / 360., 0., 0.);
-pub const CELESTE: Color = Color::hwb(195. / 360., 0.5, 0.);
-pub const MARINE: Color = Color::hwb(195. / 360., 0., 0.5);
-pub const AEGEAN: Color = Color::hwb(195. / 360., 0.25, 0.25);
+pub const CAPRI: Color = Color::spherical_hwb(195. / 360., 0., 0.);
+pub const CELESTE: Color = Color::spherical_hwb(195. / 360., 0.5, 0.);
+pub const MARINE: Color = Color::spherical_hwb(195. / 360., 0., 0.5);
+pub const AEGEAN: Color = Color::spherical_hwb(195. / 360., 0.25, 0.25);
 
-pub const AZURE: Color = Color::hwb(210. / 360., 0., 0.);
-pub const CORNFLOWER: Color = Color::hwb(210. / 360., 0.5, 0.);
-pub const MIDNIGHT: Color = Color::hwb(210. / 360., 0., 0.5);
-pub const SLATE: Color = Color::hwb(210. / 360., 0.25, 0.25);
+pub const AZURE: Color = Color::spherical_hwb(210. / 360., 0., 0.);
+pub const CORNFLOWER: Color = Color::spherical_hwb(210. / 360., 0.5, 0.);
+pub const MIDNIGHT: Color = Color::spherical_hwb(210. / 360., 0., 0.5);
+pub const SLATE: Color = Color::spherical_hwb(210. / 360., 0.25, 0.25);
 
-pub const CERULEAN: Color = Color::hwb(225. / 360., 0., 0.);
-pub const BONNET: Color = Color::hwb(225. / 360., 0.5, 0.);
-pub const SAPPHIRE: Color = Color::hwb(225. / 360., 0., 0.5);
-pub const HADAL: Color = Color::hwb(225. / 360., 0.25, 0.25);
+pub const CERULEAN: Color = Color::spherical_hwb(225. / 360., 0., 0.);
+pub const BONNET: Color = Color::spherical_hwb(225. / 360., 0.5, 0.);
+pub const SAPPHIRE: Color = Color::spherical_hwb(225. / 360., 0., 0.5);
+pub const HADAL: Color = Color::spherical_hwb(225. / 360., 0.25, 0.25);
 
-pub const BLUE: Color = Color::hwb(240. / 360., 0., 0.);
-pub const PERIWINKLE: Color = Color::hwb(240. / 360., 0.5, 0.);
-pub const NAVY: Color = Color::hwb(240. / 360., 0., 0.5);
-pub const DUSK: Color = Color::hwb(240. / 360., 0.25, 0.25);
+pub const BLUE: Color = Color::spherical_hwb(240. / 360., 0., 0.);
+pub const PERIWINKLE: Color = Color::spherical_hwb(240. / 360., 0.5, 0.);
+pub const NAVY: Color = Color::spherical_hwb(240. / 360., 0., 0.5);
+pub const DUSK: Color = Color::spherical_hwb(240. / 360., 0.25, 0.25);
 
-pub const INDIGO: Color = Color::hwb(255. / 360., 0., 0.);
-pub const HYACINTH: Color = Color::hwb(255. / 360., 0.5, 0.);
-pub const SODALITE: Color = Color::hwb(255. / 360., 0., 0.5);
-pub const CONCORD: Color = Color::hwb(255. / 360., 0.25, 0.25);
+pub const INDIGO: Color = Color::spherical_hwb(255. / 360., 0., 0.);
+pub const HYACINTH: Color = Color::spherical_hwb(255. / 360., 0.5, 0.);
+pub const SODALITE: Color = Color::spherical_hwb(255. / 360., 0., 0.5);
+pub const CONCORD: Color = Color::spherical_hwb(255. / 360., 0.25, 0.25);
 
-pub const VIOLET: Color = Color::hwb(270. / 360., 0., 0.);
-pub const LAVENDER: Color = Color::hwb(270. / 360., 0.5, 0.);
-pub const PRUNE: Color = Color::hwb(270. / 360., 0., 0.5);
-pub const VERONICA: Color = Color::hwb(270. / 360., 0.25, 0.25);
+pub const VIOLET: Color = Color::spherical_hwb(270. / 360., 0., 0.);
+pub const LAVENDER: Color = Color::spherical_hwb(270. / 360., 0.5, 0.);
+pub const PRUNE: Color = Color::spherical_hwb(270. / 360., 0., 0.5);
+pub const VERONICA: Color = Color::spherical_hwb(270. / 360., 0.25, 0.25);
 
-pub const PURPLE: Color = Color::hwb(285. / 360., 0., 0.);
-pub const LILAC: Color = Color::hwb(285. / 360., 0.5, 0.);
-pub const AMETHYST: Color = Color::hwb(285. / 360., 0., 0.5);
-pub const UBE: Color = Color::hwb(285. / 360., 0.25, 0.25);
+pub const PURPLE: Color = Color::spherical_hwb(285. / 360., 0., 0.);
+pub const LILAC: Color = Color::spherical_hwb(285. / 360., 0.5, 0.);
+pub const AMETHYST: Color = Color::spherical_hwb(285. / 360., 0., 0.5);
+pub const UBE: Color = Color::spherical_hwb(285. / 360., 0.25, 0.25);
 
-pub const MAGENTA: Color = Color::hwb(300. / 360., 0., 0.);
-pub const PHLOX: Color = Color::hwb(300. / 360., 0.5, 0.);
-pub const AUBERGINE: Color = Color::hwb(300. / 360., 0., 0.5);
-pub const MAUVE: Color = Color::hwb(300. / 360., 0.25, 0.25);
+pub const MAGENTA: Color = Color::spherical_hwb(300. / 360., 0., 0.);
+pub const PHLOX: Color = Color::spherical_hwb(300. / 360., 0.5, 0.);
+pub const AUBERGINE: Color = Color::spherical_hwb(300. / 360., 0., 0.5);
+pub const MAUVE: Color = Color::spherical_hwb(300. / 360., 0.25, 0.25);
 
-pub const FUSCHIA: Color = Color::hwb(315. / 360., 0., 0.);
-pub const BUBBLEGUM: Color = Color::hwb(315. / 360., 0.5, 0.);
-pub const PLUM: Color = Color::hwb(315. / 360., 0., 0.5);
-pub const THISTLE: Color = Color::hwb(315. / 360., 0.25, 0.25);
+pub const FUSCHIA: Color = Color::spherical_hwb(315. / 360., 0., 0.);
+pub const BUBBLEGUM: Color = Color::spherical_hwb(315. / 360., 0.5, 0.);
+pub const PLUM: Color = Color::spherical_hwb(315. / 360., 0., 0.5);
+pub const THISTLE: Color = Color::spherical_hwb(315. / 360., 0.25, 0.25);
 
-pub const ROSE: Color = Color::hwb(330. / 360., 0., 0.);
-pub const PINK: Color = Color::hwb(330. / 360., 0.5, 0.);
-pub const AMARANTH: Color = Color::hwb(330. / 360., 0., 0.5);
-pub const RASPBERRY: Color = Color::hwb(330. / 360., 0.25, 0.25);
+pub const ROSE: Color = Color::spherical_hwb(330. / 360., 0., 0.);
+pub const PINK: Color = Color::spherical_hwb(330. / 360., 0.5, 0.);
+pub const AMARANTH: Color = Color::spherical_hwb(330. / 360., 0., 0.5);
+pub const RASPBERRY: Color = Color::spherical_hwb(330. / 360., 0.25, 0.25);
 
-pub const RUBY: Color = Color::hwb(345. / 360., 0., 0.);
-pub const STRAWBERRY: Color = Color::hwb(345. / 360., 0.5, 0.);
-pub const CRIMSON: Color = Color::hwb(345. / 360., 0., 0.5);
-pub const CERISE: Color = Color::hwb(345. / 360., 0.25, 0.25);
+pub const RUBY: Color = Color::spherical_hwb(345. / 360., 0., 0.);
+pub const STRAWBERRY: Color = Color::spherical_hwb(345. / 360., 0.5, 0.);
+pub const CRIMSON: Color = Color::spherical_hwb(345. / 360., 0., 0.5);
+pub const CERISE: Color = Color::spherical_hwb(345. / 360., 0.25, 0.25);
 
 pub const QUATERNARY_COLORS: [[Color; 4]; 25] = [
     [TRANSPARENT,WHITE,BLACK,GREY],
