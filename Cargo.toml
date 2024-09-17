@@ -1,5 +1,5 @@
 [package]
-name = "prismatic-color"
+name = "prismatic_color"
 version = "0.1.5"
 edition = "2021"
 

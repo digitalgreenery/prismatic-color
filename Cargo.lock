@@ -18,7 +18,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "prismatic-color"
+name = "prismatic_color"
 version = "0.1.5"
 dependencies = [
  "num-traits",
