@@ -1,8 +1,11 @@
 //Digital Greenery
 //Spherical RGB library
 
-use num_traits::{AsPrimitive, PrimInt, Unsigned, ops::saturating};
-use std::{ f32::consts::PI};
+pub mod constants;
+pub mod transformations;
+
+use num_traits::{AsPrimitive, PrimInt, Unsigned};
+use std::f32::consts::PI;
 
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub struct Color {
@@ -13,7 +16,7 @@ pub struct Color {
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum ColorType {
     //Spectral Color
-    // WI,
+    // WBIS,
 
     //Component Representations
     RGBA,
@@ -26,36 +29,36 @@ pub enum ColorType {
     //Spherical Representations
     SphericalHCLA,
     SphericalHWBA,
+    // SphericalHSVA,
 
     //Cubic Representations
-    //Cylindrical Hue
+    //Circular Hue
     HSLA,
-    HSVA,
+    CubicHSVA,
     CubicHWBA,
-    //2D Hue
+    //Square Hue
     YUVA,
 
     //La*b*
     // LabHCLA,
     // LabA,
 }
-//Alpha could be used for specular color
 
 impl Color {
-    // Color ructor
+    // Color constructor
     pub const fn rgb(red: f32, green: f32, blue: f32) -> Color {
         Color {
             components: [red, green, blue, 1.],
             color_type: ColorType::RGBA,
         }
     }
-    pub const fn hcl(hue: f32, chroma: f32, luminance: f32) -> Color {
+    pub const fn spherical_hcl(hue: f32, chroma: f32, luminance: f32) -> Color {
         Color {
             components: [hue, chroma, luminance, 1.],
             color_type: ColorType::SphericalHCLA,
         }
     }
-    pub const fn hwb(hue: f32, white: f32, black: f32) -> Color {
+    pub const fn spherical_hwb(hue: f32, white: f32, black: f32) -> Color {
         Color {
             components: [hue, white, black, 1.],
             color_type: ColorType::SphericalHWBA,
@@ -67,10 +70,10 @@ impl Color {
             color_type: ColorType::CubicHWBA,
         }
     }
-    pub const fn hsv(hue: f32, saturation: f32, value: f32) -> Color {
+    pub const fn cubic_hsv(hue: f32, saturation: f32, value: f32) -> Color {
         Color {
             components: [hue, saturation, value, 1.],
-            color_type: ColorType::HSVA,
+            color_type: ColorType::CubicHSVA,
         }
     }
 
@@ -93,6 +96,7 @@ impl Color {
         self.components
     }
 
+
     pub fn to_rgb(&self) -> Color {
         if self.color_type == ColorType::RGBA {
             return *self;
@@ -103,10 +107,11 @@ impl Color {
             ColorType::CMYA => cmy_to_rgb(self.components),
             ColorType::RGBW => rgbw_to_rgb(self.components),
             ColorType::CMYK => cmyk_to_rgb(self.components),
-            ColorType::SphericalHCLA => hcl_to_rgb(self.components),
+            ColorType::SphericalHCLA => spherical_hcl_to_rgb(self.components),
             ColorType::SphericalHWBA => spherical_hwb_to_rgb(self.components),
-            ColorType::HSLA => hsl_to_rgb(self.components),
-            ColorType::HSVA => hsv_to_rgb(self.components),
+            // ColorType::SphericalHSVA => shperical_hsv_to_rgb(self.components),
+            ColorType::HSLA => cubic_hcl_to_rgb(self.components),
+            ColorType::CubicHSVA => cubic_hsv_to_rgb(self.components),
             ColorType::CubicHWBA => cubic_hwb_to_rgb(self.components),
             ColorType::YUVA => yuv_to_rgb(self.components),
             // ColorType::LabHCLA => lch_to_rgb(self.components),
@@ -130,12 +135,16 @@ impl Color {
     }
 
     pub fn to_hcl(self) -> Color {
-        self.to_color(ColorType::SphericalHCLA, rgb_to_hcl)
+        self.to_color(ColorType::SphericalHCLA, rgb_to_spherical_hcl)
     }
 
     pub fn to_spherical_hwb(self) -> Color {
         self.to_color(ColorType::SphericalHWBA, rgb_to_spherical_hwb)
     }
+
+    // pub fn to_spherical_hsv(self) -> Color {
+    //     self.to_color(ColorType::SphericalHSVA, rgb_to_spherical_hsv)
+    // }
 
     pub fn to_cubic_hwb(self) -> Color {
         self.to_color(ColorType::CubicHWBA, rgb_to_cubic_hwb)
@@ -145,8 +154,8 @@ impl Color {
         self.to_color(ColorType::HSLA, rgb_to_hsl)
     }
 
-    pub fn to_hsv(self) -> Color {
-        self.to_color(ColorType::HSVA, rgb_to_hsv)
+    pub fn to_cubic_hsv(self) -> Color {
+        self.to_color(ColorType::CubicHSVA, rgb_to_cubic_hsv)
     }
 
     pub fn to_cmyk(self) -> Color {
@@ -165,7 +174,53 @@ impl Color {
         self.to_color(ColorType::YUVA, rgb_to_yuv)
     }
 
-    fn to_integers<T>(self, scale: Option<T>) -> [T; 4]
+    pub fn as_f32(self) -> (f32,f32,f32,f32){
+        let (a,b,c,d) = self.to_array().into();
+        return (a as f32,b as f32,c as f32, d as f32);
+    }
+
+    // Function to generate a gradient between two colors
+    pub fn gradient_rgb(start: &Color, end: &Color, steps: usize) -> Vec<Color> {
+        let mut colors = Vec::with_capacity(steps);
+        let (start,end) = (start.to_rgb(),end.to_rgb());
+        for i in 0..steps {
+            let t = i as f32 / (steps as f32 - 1.0);  // t varies between 0.0 and 1.0
+            
+            let new_values = transformations::array_lerp(&start.to_array(), &end.to_array(), t);
+
+            colors.push(Color {
+                color_type: ColorType::RGBA, // Or handle the color type logic as needed
+                components: new_values,
+            });
+        }
+
+        colors
+    }    
+
+    pub fn convert_colors(colors: Vec<Color>,color_type: ColorType) -> Vec<Color> {
+        return colors.into_iter().map(|color| Self::convert_color(color, color_type)).collect()
+    }
+
+    pub fn convert_color(color: Color, color_type: ColorType) -> Color {
+        if color.color_type == color_type {
+            return color;
+        }
+        let color = color.to_rgb();
+        return match color_type {
+            ColorType::RGBA => color,
+            ColorType::CMYA => color.to_cmy(),
+            ColorType::RGBW => color.to_rgbw(),
+            ColorType::CMYK => color.to_cmyk(),
+            ColorType::SphericalHCLA => color.to_hcl(),
+            ColorType::SphericalHWBA => color.to_spherical_hwb(),
+            ColorType::HSLA => color.to_hsl(),
+            ColorType::CubicHSVA => color.to_cubic_hsv(),
+            ColorType::CubicHWBA => color.to_cubic_hwb(),
+            ColorType::YUVA => color.to_yuva(),
+        }
+    }
+
+    pub fn to_integers<T>(self, scale: Option<T>) -> [T; 4]
     where
         T: Unsigned + PrimInt + AsPrimitive<f32> + 'static,
         f32: AsPrimitive<T>,
@@ -179,141 +234,35 @@ impl Color {
 
         return [a, b, c, d];
     }
-    pub fn to_8bit_depth(self) -> u32 {
+    
+    pub fn to_alpha_8888_u32(self) -> u32 {
         let (a, b, c, d) = self.to_integers::<u8>(Some(255)).into();
         let (a, b, c, d) = (a as u32, b as u32, c as u32, d as u32);
-        return (a << 24) + (b << 16) + (c << 8) + d;
+        return (d << 24) + (a << 16) + (b << 8) + c;
     }
 
-    pub const TRANSPARENT: Color = Color {
-        components: [0., 0., 0., 0.],
-        color_type: ColorType::SphericalHWBA,
-    };
-    pub const WHITE: Color = Color::hwb(0., 1., 0.);
-    pub const BLACK: Color = Color::hwb(0., 0., 1.);
-    pub const GREY: Color = Color::hwb(0., 0.5, 0.5);
+    pub fn to_argb_u32(self) -> u32 {
+        return self.to_rgb().to_alpha_8888_u32();
+    }
 
-    pub const RED: Color = Color::hwb(0. / 360., 0., 0.);
-    pub const SALMON: Color = Color::hwb(0. / 360., 0.5, 0.);
-    pub const MAROON: Color = Color::hwb(0. / 360., 0., 0.5);
-    pub const BURGUNDY: Color = Color::hwb(0. / 360., 0.25, 0.25);
+    pub fn to_hex(self) -> String {
+        let rgb = self.to_rgb().to_argb_u32();
+        format!("{:06X}", rgb & 0xFFFFFF)
+    }
 
-    pub const VERMILLION: Color = Color::hwb(15. / 360., 0., 0.);
-    pub const PEACH: Color = Color::hwb(15. / 360., 0.5, 0.);
-    pub const AUBURN: Color = Color::hwb(15. / 360., 0., 0.5);
-    pub const UMBER: Color = Color::hwb(15. / 360., 0.25, 0.25);
+    pub fn to_alpha_hex(self) -> String {
+        let argb = self.to_argb_u32();
+        format!("{:08X}", argb)
+    }
 
-    pub const ORANGE: Color = Color::hwb(30. / 360., 0., 0.);
-    pub const TAN: Color = Color::hwb(30. / 360., 0.5, 0.);
-    pub const BROWN: Color = Color::hwb(30. / 360., 0., 0.5);
-    pub const BEIGE: Color = Color::hwb(30. / 360., 0.25, 0.25);
+    pub fn to_linear_rgb(self) -> Color{
+        transformations::DefinedColor::gamma(self.to_rgb(), 2.2).collapse_color()
+    }
 
-    pub const AMBER: Color = Color::hwb(45. / 360., 0., 0.);
-    pub const STRAW: Color = Color::hwb(45. / 360., 0.5, 0.);
-    pub const CARAMEL: Color = Color::hwb(45. / 360., 0., 0.5);
-    pub const SAFFRON: Color = Color::hwb(45. / 360., 0.25, 0.25);
+    // pub fn to_565_u16(self) -> u16 {
+    //     let 
+    // }
 
-    pub const YELLOW: Color = Color::hwb(60. / 360., 0., 0.);
-    pub const LEMON: Color = Color::hwb(60. / 360., 0.5, 0.);
-    pub const DRAB: Color = Color::hwb(60. / 360., 0., 0.5);
-    pub const MUSTARD: Color = Color::hwb(60. / 360., 0.25, 0.25);
-
-    pub const VIRELL: Color = Color::hwb(75. / 360., 0., 0.);
-    pub const BECQUEREL: Color = Color::hwb(75. / 360., 0.5, 0.);
-    pub const OLIVE: Color = Color::hwb(75. / 360., 0., 0.5);
-    pub const PICKLE: Color = Color::hwb(75. / 360., 0.25, 0.25);
-
-    pub const CHARTREUSE: Color = Color::hwb(90. / 360., 0., 0.);
-    pub const VIRIDINE: Color = Color::hwb(90. / 360., 0.5, 0.);
-    pub const FERN: Color = Color::hwb(90. / 360., 0., 0.5);
-    pub const PERIDOT: Color = Color::hwb(90. / 360., 0.25, 0.25);
-
-    pub const LIME: Color = Color::hwb(105. / 360., 0., 0.);
-    pub const PALMETTO: Color = Color::hwb(105. / 360., 0.5, 0.);
-    pub const MOSS: Color = Color::hwb(105. / 360., 0., 0.5);
-    pub const PETRICHOR: Color = Color::hwb(105. / 360., 0.25, 0.25);
-
-    pub const GREEN: Color = Color::hwb(120. / 360., 0., 0.);
-    pub const WILLOW: Color = Color::hwb(120. / 360., 0.5, 0.);
-    pub const FOREST: Color = Color::hwb(120. / 360., 0., 0.5);
-    pub const SAGE: Color = Color::hwb(120. / 360., 0.25, 0.25);
-
-    pub const EMERALD: Color = Color::hwb(135. / 360., 0., 0.);
-    pub const HONEYDEW: Color = Color::hwb(135. / 360., 0.5, 0.);
-    pub const ERIN: Color = Color::hwb(135. / 360., 0., 0.5);
-    pub const CLOVER: Color = Color::hwb(135. / 360., 0.25, 0.25);
-
-    pub const MINT: Color = Color::hwb(150. / 360., 0., 0.);
-    pub const CELADON: Color = Color::hwb(150. / 360., 0.5, 0.);
-    pub const CONIFER: Color = Color::hwb(150. / 360., 0., 0.5);
-    pub const JADE: Color = Color::hwb(150. / 360., 0.25, 0.25);
-
-    pub const TURQUOISE: Color = Color::hwb(165. / 360., 0., 0.);
-    pub const SEAFOAM: Color = Color::hwb(165. / 360., 0.5, 0.);
-    pub const TEAL: Color = Color::hwb(165. / 360., 0., 0.5);
-    pub const VERDIGRIS: Color = Color::hwb(165. / 360., 0.25, 0.25);
-
-    pub const CYAN: Color = Color::hwb(180. / 360., 0., 0.);
-    pub const AQUA: Color = Color::hwb(180. / 360., 0.5, 0.);
-    pub const DELUGE: Color = Color::hwb(180. / 360., 0., 0.5);
-    pub const AGAVE: Color = Color::hwb(180. / 360., 0.25, 0.25);
-
-    pub const CAPRI: Color = Color::hwb(195. / 360., 0., 0.);
-    pub const CELESTE: Color = Color::hwb(195. / 360., 0.5, 0.);
-    pub const MARINE: Color = Color::hwb(195. / 360., 0., 0.5);
-    pub const AEGEAN: Color = Color::hwb(195. / 360., 0.25, 0.25);
-
-    pub const AZURE: Color = Color::hwb(210. / 360., 0., 0.);
-    pub const CORNFLOWER: Color = Color::hwb(210. / 360., 0.5, 0.);
-    pub const PRUSSIAN: Color = Color::hwb(210. / 360., 0., 0.5);
-    pub const DENIM: Color = Color::hwb(210. / 360., 0.25, 0.25);
-
-    pub const CERULEAN: Color = Color::hwb(225. / 360., 0., 0.);
-    pub const BONNET: Color = Color::hwb(225. / 360., 0.5, 0.);
-    pub const COBALT: Color = Color::hwb(225. / 360., 0., 0.5);
-    pub const HADAL: Color = Color::hwb(225. / 360., 0.25, 0.25);
-
-    pub const BLUE: Color = Color::hwb(240. / 360., 0., 0.);
-    pub const PERIWINKLE: Color = Color::hwb(240. / 360., 0.5, 0.);
-    pub const NAVY: Color = Color::hwb(240. / 360., 0., 0.5);
-    pub const SAPPHIRE: Color = Color::hwb(240. / 360., 0.25, 0.25);
-
-    pub const INDIGO: Color = Color::hwb(255. / 360., 0., 0.);
-    pub const HYACINTH: Color = Color::hwb(255. / 360., 0.5, 0.);
-    pub const SODALITE: Color = Color::hwb(255. / 360., 0., 0.5);
-    pub const CONCORD: Color = Color::hwb(255. / 360., 0.25, 0.25);
-
-    pub const VIOLET: Color = Color::hwb(270. / 360., 0., 0.);
-    pub const LAVENDER: Color = Color::hwb(270. / 360., 0.5, 0.);
-    pub const PRUNE: Color = Color::hwb(270. / 360., 0., 0.5);
-    pub const VERONICA: Color = Color::hwb(270. / 360., 0.25, 0.25);
-
-    pub const PURPLE: Color = Color::hwb(285. / 360., 0., 0.);
-    pub const LILAC: Color = Color::hwb(285. / 360., 0.5, 0.);
-    pub const AMETHYST: Color = Color::hwb(285. / 360., 0., 0.5);
-    pub const UBE: Color = Color::hwb(285. / 360., 0.25, 0.25);
-
-    pub const MAGENTA: Color = Color::hwb(300. / 360., 0., 0.);
-    pub const PHLOX: Color = Color::hwb(300. / 360., 0.5, 0.);
-    pub const AUBERGINE: Color = Color::hwb(300. / 360., 0., 0.5);
-    pub const MAUVE: Color = Color::hwb(300. / 360., 0.25, 0.25);
-
-    pub const FUSCHIA: Color = Color::hwb(315. / 360., 0., 0.);
-    pub const BUBBLEGUM: Color = Color::hwb(315. / 360., 0.5, 0.);
-    pub const PLUM: Color = Color::hwb(315. / 360., 0., 0.5);
-    pub const THISTLE: Color = Color::hwb(315. / 360., 0.25, 0.25);
-
-    pub const ROSE: Color = Color::hwb(330. / 360., 0., 0.);
-    pub const PINK: Color = Color::hwb(330. / 360., 0.5, 0.);
-    pub const AMARANTH: Color = Color::hwb(330. / 360., 0., 0.5);
-    pub const RASPBERRY: Color = Color::hwb(330. / 360., 0.25, 0.25);
-
-    pub const RUBY: Color = Color::hwb(345. / 360., 0., 0.);
-    pub const STRAWBERRY: Color = Color::hwb(345. / 360., 0.5, 0.);
-    pub const CRIMSON: Color = Color::hwb(345. / 360., 0., 0.5);
-    pub const CERISE: Color = Color::hwb(345. / 360., 0.25, 0.25);
-
-    //pub fn fmt_hex()
 }
 
 //To RGBA
@@ -337,7 +286,7 @@ fn cmyk_to_rgb(components: [f32; 4]) -> [f32; 4] {
     ]
 }
 
-fn hcl_to_rgb(hcl: [f32; 4]) -> [f32; 4] {
+fn spherical_hcl_to_rgb(hcl: [f32; 4]) -> [f32; 4] {
     let (hue, chroma, luminance, alpha) = hcl.into();
     if chroma == 0. {
         let three: f32 = 3.0;
@@ -351,9 +300,9 @@ fn hcl_to_rgb(hcl: [f32; 4]) -> [f32; 4] {
     let hue_angle: f32 = (PI / 2.0) * (hue % 1.0) * chroma + (PI / 4.0) * (1.0 - chroma);
     let phi: f32 = 1.95968918625 - 1.1 * (1.15074 - 0.7893882996 * chroma).sin();
     //Returns the xyz coordinate from the spherical coordinates
-    let a: f32 = set_to_zero_if_small(luminance * hue_angle.cos() * phi.sin());
-    let b: f32 = set_to_zero_if_small(luminance * hue_angle.sin() * phi.sin());
-    let c: f32 = set_to_zero_if_small(luminance * phi.cos());
+    let a: f32 = luminance * hue_angle.cos() * phi.sin();
+    let b: f32 = luminance * hue_angle.sin() * phi.sin();
+    let c: f32 = luminance * phi.cos();
 
     let (r, g, b) = match hue.floor() as u8 {
         0 => (a, b, c),
@@ -367,10 +316,16 @@ fn hcl_to_rgb(hcl: [f32; 4]) -> [f32; 4] {
 fn spherical_hwb_to_rgb(hwb: [f32; 4]) -> [f32; 4] {
     let (hue, white, black, alpha) = hwb.into();
     let hcl = [hue, 1. - white, 1. - black, alpha];
-    hcl_to_rgb(hcl)
+    spherical_hcl_to_rgb(hcl)
 }
 
-fn hsl_to_rgb(components: [f32; 4]) -> [f32; 4] {
+fn spherical_hsv_to_rgb(hsv: [f32; 4]) -> [f32; 4] {
+    let (hue, white, black, alpha) = hsv.into();
+    let hcl = [hue, 1. - white, 1. - black, alpha];
+    spherical_hcl_to_rgb(hcl)
+}
+
+fn cubic_hcl_to_rgb(components: [f32; 4]) -> [f32; 4] {
     let (hue, saturation, lightness, alpha) = components.into();
     let h = hue * 6.;
     let h_int = h as u8;
@@ -390,7 +345,7 @@ fn hsl_to_rgb(components: [f32; 4]) -> [f32; 4] {
     [r, g, b, alpha]
 }
 
-fn hsv_to_rgb(hsv: [f32; 4]) -> [f32; 4] {
+fn cubic_hsv_to_rgb(hsv: [f32; 4]) -> [f32; 4] {
     let (hue, saturation, value, alpha) = hsv.into();
     let h = hue * 6.;
     let h_int = h as u8;
@@ -414,7 +369,7 @@ fn cubic_hwb_to_rgb(hwb: [f32; 4]) -> [f32; 4] {
     let saturation = 1. - (white / (1. - black));
     let value = 1. - black;
     let hsv = [hue, saturation, value, alpha];
-    hsv_to_rgb(hsv)
+    cubic_hsv_to_rgb(hsv)
 }
 
 fn yuv_to_rgb(yuva: [f32; 4]) -> [f32; 4] {
@@ -457,9 +412,9 @@ fn rgb_to_cmy(components: [f32; 4]) -> [f32; 4] {
     [1. - r, 1. - g, 1. - b, a]
 }
 
-fn rgb_to_hcl(rgb: [f32; 4]) -> [f32; 4] {
+fn rgb_to_spherical_hcl(rgb: [f32; 4]) -> [f32; 4] {
     let (r, g, b, alpha) = rgb.into();
-    if set_to_zero_if_small(r.max(g).max(b)) == 0. {
+    if r.max(g).max(b) == 0. {
         return [0., 0., 0., alpha];
     }
     let (c, m, y, _) = rgb_to_cmy(rgb).into();
@@ -476,7 +431,7 @@ fn rgb_to_hcl(rgb: [f32; 4]) -> [f32; 4] {
     let phi = (c / luminance).acos();
     let hue_angle = b.atan2(a);
     let chroma = (((phi - 1.95968918625) / -1.1).asin() - 1.15074) / -0.7893882996;
-    if set_to_zero_if_small(chroma) == 0. {
+    if chroma == 0. {
         return [0., 0., luminance, alpha];
     }
     let hue = (((hue_angle - ((PI / 4.) * (1. - chroma))) / (PI / 2.) / chroma + secondary as f32) / 3.) % 1.;
@@ -485,12 +440,17 @@ fn rgb_to_hcl(rgb: [f32; 4]) -> [f32; 4] {
 }
 
 fn rgb_to_spherical_hwb(rgb: [f32; 4]) -> [f32; 4] {
-    let (h, c, l, a) = rgb_to_hcl(rgb).into();
+    let (h, c, l, a) = rgb_to_spherical_hcl(rgb).into();
     [h, 1. - c, 1. - l, a]
 }
 
+fn rgb_to_spherical_hsv(rgb: [f32; 4]) -> [f32; 4] {
+    let (h, c, l, a) = rgb_to_spherical_hcl(rgb).into();
+    [h, 1. - c, 1. - l, a] 
+}
+
 fn rgb_to_cubic_hwb(rgb: [f32; 4]) -> [f32; 4] {
-    let (h, s, v, a) = rgb_to_hsv(rgb).into();
+    let (h, s, v, a) = rgb_to_cubic_hsv(rgb).into();
     let w = (1. - s) * v;
     let b = 1. - v;
     [h, w, b, a]
@@ -524,7 +484,7 @@ fn rgb_to_hsl(rgb: [f32; 4]) -> [f32; 4] {
     [hue, saturation, lightness, alpha]
 }
 
-fn rgb_to_hsv(rgba: [f32; 4]) -> [f32; 4] {
+fn rgb_to_cubic_hsv(rgba: [f32; 4]) -> [f32; 4] {
     let (r, g, b, a) = rgba.into();
     let rgb = [r, g, b];
     let c_max = rgb.max_value();
@@ -602,160 +562,50 @@ impl ArrayExt for [f32] {
     // }
 }
 
-#[derive(Clone)]
-enum NormalCurve {
-    Linear,
-    Power(f32),
-    Quadratiic(f32, f32),
-    Cubic(f32, f32, f32, f32),
-    Composed(Vec<(NormalCurve, f32, f32)>),
-}
-
-impl NormalCurve {
-    fn simple_arrary(&self) -> [NormalCurve; 4] {
-        [self.clone(), self.clone(), self.clone(), self.clone()]
+impl From<Color> for [f32; 4] {
+    fn from(color: Color) -> Self {
+        color.components
     }
 }
 
-trait Mapping {
-    fn map_curve(self, curve: NormalCurve) -> f32;
-    fn quadratic_mapping(self, x: f32, y: f32) -> f32;
-    fn cubic_mapping(self, x1: f32, y1: f32, x2: f32, y2: f32) -> f32;
-    fn composed_mapping(self, curves: Vec<(NormalCurve, f32, f32)>) -> f32;
-}
-impl Mapping for f32 {
-    fn map_curve(self, curve: NormalCurve) -> f32 {
-        match curve {
-            NormalCurve::Linear => self,
-            NormalCurve::Power(a) => self.powf(a),
-            NormalCurve::Quadratiic(x, y) => self.quadratic_mapping(x, y),
-            NormalCurve::Cubic(x1, y1, x2, y2) => self.cubic_mapping(x1, y1, x2, y2),
-            NormalCurve::Composed(curves) => self.composed_mapping(curves),
-        }
-    }
-    fn quadratic_mapping(self, x1: f32, y1: f32) -> f32 {
-        if x1 == 0.5 {
-            return self * (self - 2. * y1 * (self - 1.))
-        }
-        else{
-            let m = (x1 - (x1 * x1 - 2. * x1 * self + self).sqrt())/(2. * x1 - 1.);
-            return 2. * (1. - m) * m * y1 + m.powi(2);
-        }
-    }
-    fn cubic_mapping(self, x1: f32, y1: f32, x2: f32, y2: f32) -> f32 {
-        return 0.0;
-    }
-
-    fn composed_mapping(self, curves: Vec<(NormalCurve, f32, f32)>) -> f32 {
-        return 0.0;
+impl From<Color> for (f32, f32, f32, f32) {
+    fn from(color: Color) -> Self {
+        let [r, g, b, a] = color.components;
+        (r, g, b, a)
     }
 }
 
-pub struct DefinedColor {
-    color: Color,
-    mapping_curve: [NormalCurve; 4],
-}
-impl DefinedColor {
-    pub fn linear(color: Color) -> DefinedColor {
-        return DefinedColor {
-            color: color,
-            mapping_curve: NormalCurve::Linear.simple_arrary(),
-        };
-    }
-
-    pub fn gamma(color: Color, power: f32) -> DefinedColor {
-        return DefinedColor {
-            color: color,
-            mapping_curve: NormalCurve::Power(1. / power).simple_arrary(),
-        };
-    }
-
-    pub fn component_gamma(color: Color, power: [f32; 4]) -> DefinedColor {
-        return DefinedColor {
-            color: color,
-            mapping_curve: [
-                NormalCurve::Power(1. / power[0]),
-                NormalCurve::Power(1. / power[1]),
-                NormalCurve::Power(1. / power[2]),
-                NormalCurve::Power(1. / power[3]),
-            ],
-        };
-    }
-
-    pub fn quadratic(color: Color, x: f32, y: f32) -> DefinedColor {
-        return DefinedColor {
-            color: color,
-            mapping_curve: [
-                NormalCurve::Quadratiic(x, y),
-                NormalCurve::Quadratiic(x, y),
-                NormalCurve::Quadratiic(x, y),
-                NormalCurve::Quadratiic(x, y),
-            ],
-        };
-    }
-
-    pub fn cubic(color: Color, x1: f32, y1: f32, x2: f32, y2: f32) -> DefinedColor {
-        return DefinedColor {
-            color: color,
-            mapping_curve: [
-                NormalCurve::Cubic(x1, y1, x2, y2),
-                NormalCurve::Cubic(x1, y1, x2, y2),
-                NormalCurve::Cubic(x1, y1, x2, y2),
-                NormalCurve::Cubic(x1, y1, x2, y2),
-            ],
-        };
-    }
-
-    pub fn collapse_color(&self) -> Color {
-        Color {
-            components: [
-                self.color.components[0].map_curve(self.mapping_curve[0].clone()),
-                self.color.components[1].map_curve(self.mapping_curve[1].clone()),
-                self.color.components[2].map_curve(self.mapping_curve[2].clone()),
-                self.color.components[3].map_curve(self.mapping_curve[3].clone()),
-            ],
-            color_type: self.color.color_type,
-        }
+impl From<Color> for (f64, f64, f64, f64) {
+    fn from(color: Color) -> Self {
+        let [r, g, b, a] = color.components;
+        (r as f64, g as f64, b as f64, a as f64)
     }
 }
 
-fn set_to_zero_if_small(value: f32) -> f32 {
-    if value < 1e-7 {
-        0.0
-    } else {
-        value
+impl From<Color> for [u8; 4] {
+    fn from(color: Color) -> Self {
+        let scale = 255.0;
+        let [r, g, b, a] = color.components;
+        [
+            (r * scale).round() as u8,
+            (g * scale).round() as u8,
+            (b * scale).round() as u8,
+            (a * scale).round() as u8,
+        ]
     }
 }
 
-pub fn tuple_lerp(
-    tuple_a: (f32, f32, f32, f32),
-    tuple_b: (f32, f32, f32, f32),
-    percent: f32,
-) -> (f32, f32, f32, f32) {
-    (
-        lerp(tuple_a.0, tuple_b.0, percent),
-        lerp(tuple_a.1, tuple_b.1, percent),
-        lerp(tuple_a.2, tuple_b.2, percent),
-        lerp(tuple_a.3, tuple_b.3, percent),
-    )
-}
-
-pub fn array_lerp<T>(array_a: &[T], array_b: &[T], percent: T) -> Vec<T>
-where
-    T: Copy + std::ops::Add<Output = T> + std::ops::Sub<Output = T> + std::ops::Mul<Output = T>,
-{
-    array_a
-        .iter()
-        .zip(array_b.iter())
-        .map(|(&a, &b)| lerp(a, b, percent))
-        .collect()
-}
-
-pub fn lerp<T>(a: T, b: T, percent: T) -> T
-where
-    T: Copy + std::ops::Add<Output = T> + std::ops::Sub<Output = T> + std::ops::Mul<Output = T>,
-{
-    a + (b - a) * percent
+impl From<Color> for [u16; 4] {
+    fn from(color: Color) -> Self {
+        let scale = 65535.0;
+        let [r, g, b, a] = color.components;
+        [
+            (r * scale).round() as u16,
+            (g * scale).round() as u16,
+            (b * scale).round() as u16,
+            (a * scale).round() as u16,
+        ]
+    }
 }
 
 #[cfg(test)]
@@ -770,7 +620,7 @@ mod tests {
         for i in 0..num {
             
             let hsl = [i as f32 * angle / 360., 0.6, 0.5, 0.5];
-            let rgb: [f32; 4] = hsl_to_rgb(hsl);
+            let rgb: [f32; 4] = cubic_hcl_to_rgb(hsl);
             let hsl_recovered = rgb_to_hsl(rgb);
             println!(
                 "HSL: {}, RGB: {}, HSL Recovered: {}",
@@ -782,22 +632,5 @@ mod tests {
     }
     fn print_array(arr: [f32; 4]) -> String {
         format!("[{:.2},{:.2},{:.2},{:.2}] ", arr[0], arr[1], arr[2], arr[3])
-    }
-
-    #[test]
-    fn test_lerp() {
-        let array_a = vec![1., 2., 3., 4.];
-        let array_b = vec![5., 6., 7., 8.];
-
-        let result = array_lerp(&array_a, &array_b, 0.25);
-
-        println!("{:?}", result);
-
-        let array_a = vec![1., 0.5, 0.3, 1. / 7.];
-        let array_b = vec![0., 0., 1., 0.8];
-
-        let result = array_lerp(&array_a, &array_b, 0.25);
-
-        println!("{:?}", result);
     }
 }
