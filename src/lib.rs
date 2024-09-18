@@ -134,7 +134,7 @@ impl Color {
         }
     }
 
-    pub fn to_hcl(self) -> Color {
+    pub fn to_spherical_hcl(self) -> Color {
         self.to_color(ColorType::SphericalHCLA, rgb_to_spherical_hcl)
     }
 
@@ -211,7 +211,7 @@ impl Color {
             ColorType::CMYA => color.to_cmy(),
             ColorType::RGBW => color.to_rgbw(),
             ColorType::CMYK => color.to_cmyk(),
-            ColorType::SphericalHCLA => color.to_hcl(),
+            ColorType::SphericalHCLA => color.to_spherical_hcl(),
             ColorType::SphericalHWBA => color.to_spherical_hwb(),
             ColorType::HSLA => color.to_hsl(),
             ColorType::CubicHSVA => color.to_cubic_hsv(),
