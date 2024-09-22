@@ -205,7 +205,7 @@ impl Color {
             let new_values = transformations::array_lerp(&start.to_array(), &end.to_array(), t);
 
             colors.push(Color {
-                color_type: ColorType::RGBA, // Or handle the color type logic as needed
+                color_type: start.color_type, // Or handle the color type logic as needed
                 components: new_values,
             });
         }
@@ -679,4 +679,23 @@ mod tests {
     fn print_array(arr: [f32; 4]) -> String {
         format!("[{:.2},{:.2},{:.2},{:.2}] ", arr[0], arr[1], arr[2], arr[3])
     }
+
+    #[test]
+    fn test_gradient() {
+        let start = Color::spherical_hwb(0.0, 0.0, 0.0); // Black
+        let end = Color::spherical_hwb(0.95, 0.0, 0.0);   // Red
+        let steps = 10;
+
+        let gradient = Color::gradient(&start, &end, steps);
+        
+        // Print the results for inspection
+        for (i, color) in gradient.iter().enumerate() {
+            println!("Step {}: {:?}", i, color);
+        }
+
+        // Assert the first and last colors to check correctness
+        assert_eq!(gradient.first().unwrap(), &start);
+        assert_eq!(gradient.last().unwrap(), &end);
+    }
+
 }
