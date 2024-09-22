@@ -179,10 +179,17 @@ impl Color {
         return (a as f32,b as f32,c as f32, d as f32);
     }
 
+    fn wrap_hue(&self) -> Color {
+        let mut color = self.to_tuple();
+        if color.0 >= 1. {
+            color.0 = color.0 - 1.;
+        }
+        return Color{components: color.into(), color_type: self.color_type}
+    }
+
     // Function to generate a gradient between two colors
-    pub fn gradient_rgb(start: &Color, end: &Color, steps: usize) -> Vec<Color> {
+    fn gradient_fn(start: &Color, end: &Color, steps: usize) -> Vec<Color> {
         let mut colors = Vec::with_capacity(steps);
-        let (start,end) = (start.to_rgb(),end.to_rgb());
         for i in 0..steps {
             let t = i as f32 / (steps as f32 - 1.0);  // t varies between 0.0 and 1.0
             
@@ -195,17 +202,47 @@ impl Color {
         }
 
         colors
+    } 
+
+    fn gradient_hue(start: &Color, end: &Color, steps: usize) -> Vec<Color> {
+        let end_hue =
+        if end.components[0] < start.components[0] {
+            end.components[0] + 1.
+        }
+        else{
+            end.components[0]
+        };
+        let end_array = [end_hue,end.components[1],end.components[2],end.components[3]];
+        let end = Color { components: end_array, color_type: end.color_type }; 
+        return  Self::gradient_fn(&start, &end, steps).iter().map(|color| color.wrap_hue()).collect()
+    }
+
+    pub fn gradient(start: &Color, end: &Color, steps: usize) -> Vec<Color> {
+        let color_type = start.color_type;
+        let end = end.convert_color(color_type);
+        return match color_type {
+            //Spherical Representations
+            ColorType::SphericalHCLA |
+            ColorType::SphericalHWBA |
+            //Cubic Representations
+            ColorType::HSLA |
+            ColorType::CubicHSVA |
+            ColorType::CubicHWBA 
+            => Self::gradient_hue(&start, &end, steps),
+            _ => Self::gradient_fn(&start, &end, steps)
+        
+        }
     }    
 
     pub fn convert_colors(colors: Vec<Color>,color_type: ColorType) -> Vec<Color> {
-        return colors.into_iter().map(|color| Self::convert_color(color, color_type)).collect()
+        return colors.into_iter().map(|color| color.convert_color(color_type)).collect()
     }
 
-    pub fn convert_color(color: Color, color_type: ColorType) -> Color {
-        if color.color_type == color_type {
-            return color;
+    pub fn convert_color(&self, color_type: ColorType) -> Color {
+        if self.color_type == color_type {
+            return *self;
         }
-        let color = color.to_rgb();
+        let color = self.to_rgb();
         return match color_type {
             ColorType::RGBA => color,
             ColorType::CMYA => color.to_cmy(),
@@ -319,11 +356,11 @@ fn spherical_hwb_to_rgb(hwb: [f32; 4]) -> [f32; 4] {
     spherical_hcl_to_rgb(hcl)
 }
 
-fn spherical_hsv_to_rgb(hsv: [f32; 4]) -> [f32; 4] {
-    let (hue, white, black, alpha) = hsv.into();
-    let hcl = [hue, 1. - white, 1. - black, alpha];
-    spherical_hcl_to_rgb(hcl)
-}
+// fn spherical_hsv_to_rgb(hsv: [f32; 4]) -> [f32; 4] {
+//     let (hue, white, black, alpha) = hsv.into();
+//     let hcl = [hue, 1. - white, 1. - black, alpha];
+//     spherical_hcl_to_rgb(hcl)
+// }
 
 fn cubic_hcl_to_rgb(components: [f32; 4]) -> [f32; 4] {
     let (hue, saturation, lightness, alpha) = components.into();
@@ -444,10 +481,10 @@ fn rgb_to_spherical_hwb(rgb: [f32; 4]) -> [f32; 4] {
     [h, 1. - c, 1. - l, a]
 }
 
-fn rgb_to_spherical_hsv(rgb: [f32; 4]) -> [f32; 4] {
-    let (h, c, l, a) = rgb_to_spherical_hcl(rgb).into();
-    [h, 1. - c, 1. - l, a] 
-}
+// fn rgb_to_spherical_hsv(rgb: [f32; 4]) -> [f32; 4] {
+//     let (h, c, l, a) = rgb_to_spherical_hcl(rgb).into();
+//     [h, 1. - c, 1. - l, a] 
+// }
 
 fn rgb_to_cubic_hwb(rgb: [f32; 4]) -> [f32; 4] {
     let (h, s, v, a) = rgb_to_cubic_hsv(rgb).into();
