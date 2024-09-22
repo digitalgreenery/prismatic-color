@@ -151,21 +151,21 @@ where
 }
 
 mod test{
-    use crate::transformations::array_lerp;
+    
 
     #[test]
     fn test_lerp() {
         let array_a = [1., 2., 3., 4.];
         let array_b = [5., 6., 7., 8.];
 
-        let result = array_lerp(&array_a, &array_b, 0.25);
+        let result = crate::transformations::array_lerp(&array_a, &array_b, 0.25);
 
         println!("{:?}", result);
 
         let array_a = [1., 0.5, 0.3, 1. / 7.];
         let array_b = [0., 0., 1., 0.8];
 
-        let result = array_lerp(&array_a, &array_b, 0.25);
+        let result = crate::transformations::array_lerp(&array_a, &array_b, 0.25);
 
         println!("{:?}", result);
     }

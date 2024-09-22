@@ -96,6 +96,15 @@ impl Color {
         self.components
     }
 
+    pub fn to_u8_array(&self) -> [u8; 4] {
+        [
+            (self.components[0] * 255.) as u8,
+            (self.components[1] * 255.) as u8,
+            (self.components[2] * 255.) as u8,
+            (self.components[3] * 255.) as u8,
+        ]
+    }
+
 
     pub fn to_rgb(&self) -> Color {
         if self.color_type == ColorType::RGBA {
