@@ -216,10 +216,10 @@ impl Color {
     fn gradient_hue(start: &Color, end: &Color, steps: usize) -> Vec<Color> {
         let start_hue =
         if start.components[1] == 0. {
-            end.components[1] 
+            end.components[0] 
         }
         else{
-            start.components[1]
+            start.components[0]
         };
         let end_hue =
         if end.components[0] < start.components[0] {
