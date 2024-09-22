@@ -214,6 +214,13 @@ impl Color {
     } 
 
     fn gradient_hue(start: &Color, end: &Color, steps: usize) -> Vec<Color> {
+        let start_hue =
+        if start.components[1] == 0. {
+            end.components[1] 
+        }
+        else{
+            start.components[1]
+        };
         let end_hue =
         if end.components[0] < start.components[0] {
             end.components[0] + 1.
@@ -221,7 +228,9 @@ impl Color {
         else{
             end.components[0]
         };
+        let start_array = [start_hue,start.components[1],start.components[2],start.components[3]];
         let end_array = [end_hue,end.components[1],end.components[2],end.components[3]];
+        let start = Color { components: start_array, color_type: start.color_type }; 
         let end = Color { components: end_array, color_type: end.color_type }; 
         return  Self::gradient_fn(&start, &end, steps).iter().map(|color| color.wrap_hue()).collect()
     }
