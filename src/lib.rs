@@ -215,7 +215,8 @@ impl Color {
 
     fn gradient_hue(start: &Color, end: &Color, steps: usize) -> Vec<Color> {
         let start_hue =
-        if start.components[1] == 0. {
+        if start.components[1] == 0. && (start.color_type != ColorType::CubicHWBA ||  start.color_type != ColorType::SphericalHWBA) ||
+        start.components[1] == start.components[2] && (start.color_type == ColorType::CubicHWBA ||  start.color_type == ColorType::SphericalHWBA) {
             end.components[0] 
         }
         else{
