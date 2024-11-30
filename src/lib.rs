@@ -5,6 +5,7 @@ pub mod constants;
 pub mod transformations;
 
 use num_traits::{AsPrimitive, PrimInt, Unsigned};
+use transformations::lerp;
 use std::f32::consts::PI;
 
 #[derive(Debug, Clone, Copy, PartialEq)]
@@ -127,7 +128,7 @@ impl Color {
             ColorType::SphericalHCLA => spherical_hcl_to_rgb(self.components),
             ColorType::SphericalHWBA => spherical_hwb_to_rgb(self.components),
             // ColorType::SphericalHSVA => shperical_hsv_to_rgb(self.components),
-            ColorType::HSLA => cubic_hcl_to_rgb(self.components),
+            ColorType::HSLA => cubic_hsl_to_rgb(self.components),
             ColorType::CubicHSVA => cubic_hsv_to_rgb(self.components),
             ColorType::CubicHWBA => cubic_hwb_to_rgb(self.components),
             ColorType::YUVA => yuv_to_rgb(self.components),
@@ -140,55 +141,68 @@ impl Color {
         }
     }
 
-    fn to_color(&self, color_type: ColorType, rgb_to_color: fn([f32; 4]) -> [f32; 4]) -> Color {
-        if self.color_type == color_type {
+    pub fn to_color(&self, target_type: ColorType) -> Color {
+        if self.color_type == target_type {
             return *self;
         }
-        let components: [f32; 4] = rgb_to_color(self.to_rgb().components);
+
+        // Convert the current color to RGB first
+        let rgb_color = self.to_rgb();
+
+        // Determine the conversion function based on the target ColorType
+        let components = match target_type {
+            ColorType::SphericalHCLA => rgb_to_spherical_hcl(rgb_color.components),
+            ColorType::SphericalHWBA => rgb_to_spherical_hwb(rgb_color.components),
+            ColorType::CubicHWBA => rgb_to_cubic_hwb(rgb_color.components),
+            ColorType::HSLA => rgb_to_hsl(rgb_color.components),
+            ColorType::CubicHSVA => rgb_to_cubic_hsv(rgb_color.components),
+            ColorType::CMYK => rgb_to_cmyk(rgb_color.components),
+            ColorType::CMYA => rgb_to_cmy(rgb_color.components),
+            ColorType::RGBW => rgb_to_rgbw(rgb_color.components),
+            ColorType::YUVA => rgb_to_yuv(rgb_color.components),
+            ColorType::RGBA => rgb_color.components, // Already in RGB, no conversion needed
+        };
+
         Color {
             components,
-            color_type: color_type,
+            color_type: target_type,
         }
     }
 
     pub fn to_spherical_hcl(self) -> Color {
-        self.to_color(ColorType::SphericalHCLA, rgb_to_spherical_hcl)
+        self.to_color(ColorType::SphericalHCLA)
     }
 
     pub fn to_spherical_hwb(self) -> Color {
-        self.to_color(ColorType::SphericalHWBA, rgb_to_spherical_hwb)
+        self.to_color(ColorType::SphericalHWBA)
     }
 
-    // pub fn to_spherical_hsv(self) -> Color {
-    //     self.to_color(ColorType::SphericalHSVA, rgb_to_spherical_hsv)
-    // }
-
     pub fn to_cubic_hwb(self) -> Color {
-        self.to_color(ColorType::CubicHWBA, rgb_to_cubic_hwb)
+        self.to_color(ColorType::CubicHWBA)
     }
 
     pub fn to_hsl(self) -> Color {
-        self.to_color(ColorType::HSLA, rgb_to_hsl)
+        self.to_color(ColorType::HSLA)
     }
 
     pub fn to_cubic_hsv(self) -> Color {
-        self.to_color(ColorType::CubicHSVA, rgb_to_cubic_hsv)
+        self.to_color(ColorType::CubicHSVA)
     }
 
     pub fn to_cmyk(self) -> Color {
-        self.to_color(ColorType::CMYK, rgb_to_cmyk)
+        self.to_color(ColorType::CMYK)
     }
 
     pub fn to_cmy(self) -> Color {
-        self.to_color(ColorType::CMYA, rgb_to_cmy)
+        self.to_color(ColorType::CMYA)
     }
 
     pub fn to_rgbw(self) -> Color {
-        self.to_color(ColorType::RGBW, rgb_to_rgbw)
+        self.to_color(ColorType::RGBW)
     }
 
     pub fn to_yuva(self) -> Color {
-        self.to_color(ColorType::YUVA, rgb_to_yuv)
+        self.to_color(ColorType::YUVA)
     }
 
     pub fn as_f32(self) -> (f32,f32,f32,f32){
@@ -202,6 +216,25 @@ impl Color {
             color.0 = color.0 - 1.;
         }
         return Color{components: color.into(), color_type: self.color_type}
+    }
+
+    pub fn remap_rgb_components(
+        &self,
+        percentage: f32,
+        s_r: f32,
+        s_g: f32,
+        s_b: f32,
+    ) -> Color {
+        let [r, g, b, a] = self.to_rgb().components;
+
+        let r_remapped = r * lerp(1.0, s_r, percentage);
+        let g_remapped = g * lerp(1.0, s_g, percentage);
+        let b_remapped = b * lerp(1.0, s_b, percentage);
+
+        Color {
+            components: [r_remapped, g_remapped, b_remapped, a],
+            color_type: ColorType::RGBA,
+        }.to_color(self.color_type)
     }
 
     // Function to generate a gradient between two colors
@@ -323,9 +356,7 @@ impl Color {
         transformations::DefinedColor::gamma(self.to_rgb(), 2.2).collapse_color()
     }
 
-    // pub fn to_565_u16(self) -> u16 {
-    //     let 
-    // }
+
 
 }
 
@@ -383,13 +414,7 @@ fn spherical_hwb_to_rgb(hwb: [f32; 4]) -> [f32; 4] {
     spherical_hcl_to_rgb(hcl)
 }
 
-// fn spherical_hsv_to_rgb(hsv: [f32; 4]) -> [f32; 4] {
-//     let (hue, white, black, alpha) = hsv.into();
-//     let hcl = [hue, 1. - white, 1. - black, alpha];
-//     spherical_hcl_to_rgb(hcl)
-// }
-
-fn cubic_hcl_to_rgb(components: [f32; 4]) -> [f32; 4] {
+fn cubic_hsl_to_rgb(components: [f32; 4]) -> [f32; 4] {
     let (hue, saturation, lightness, alpha) = components.into();
     let h = hue * 6.;
     let h_int = h as u8;
@@ -707,7 +732,7 @@ mod tests {
         for i in 0..num {
             
             let hsl = [i as f32 * angle / 360., 0.6, 0.5, 0.5];
-            let rgb: [f32; 4] = cubic_hcl_to_rgb(hsl);
+            let rgb: [f32; 4] = cubic_hsl_to_rgb(hsl);
             let hsl_recovered = rgb_to_hsl(rgb);
             println!(
                 "HSL: {}, RGB: {}, HSL Recovered: {}",
