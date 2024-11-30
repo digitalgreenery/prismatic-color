@@ -77,6 +77,14 @@ impl Color {
         }
     }
 
+    pub const fn from_array(components: [f32; 4], color_type: ColorType) -> Color{
+        Color { components: components, color_type: color_type }
+    }
+
+    pub const fn from_tuple(components: (f32,f32,f32,f32), color_type: ColorType) -> Color{
+        Color { components: [components.0,components.1,components.2,components.3], color_type: color_type }
+    }   
+
     pub fn set_alpha(&self, alpha: f32) -> Color {
         if self.color_type == ColorType::CMYK || self.color_type == ColorType::RGBW {
             return *self;
@@ -663,6 +671,29 @@ impl From<Color> for [u16; 4] {
         ]
     }
 }
+
+pub trait IntoColor {
+    fn into_color(self, color_type: ColorType) -> Color;
+}
+
+impl IntoColor for [f32; 4] {
+    fn into_color(self, color_type: ColorType) -> Color {
+        Color {
+            components: self,
+            color_type,
+        }
+    }
+}
+
+impl IntoColor for (f32, f32, f32, f32) {
+    fn into_color(self, color_type: ColorType) -> Color {
+        Color {
+            components: [self.0, self.1, self.2, self.3],
+            color_type,
+        }
+    }
+}
+
 
 #[cfg(test)]
 mod tests {
