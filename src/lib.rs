@@ -5,7 +5,7 @@ pub mod constants;
 pub mod transformations;
 
 use num_traits::{AsPrimitive, PrimInt, Unsigned};
-use transformations::lerp;
+use transformations::{lerp, DefinedColor};
 use std::f32::consts::PI;
 
 #[derive(Debug, Clone, Copy, PartialEq)]
@@ -235,6 +235,14 @@ impl Color {
             components: [r_remapped, g_remapped, b_remapped, a],
             color_type: ColorType::RGBA,
         }.to_color(self.color_type)
+    }
+
+    pub fn component_gamma_transform(&self, red: f32, green: f32, blue: f32) -> Color{
+        DefinedColor::component_gamma(self.to_rgb(), [red,green,blue,1.]).collapse_color().to_color(self.color_type)
+    }
+
+    pub fn gamma_transform(&self, gamma: f32) -> Color{
+        DefinedColor::gamma(self.to_rgb(), gamma).collapse_color().to_color(self.color_type)
     }
 
     // Function to generate a gradient between two colors
