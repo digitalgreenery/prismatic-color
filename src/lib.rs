@@ -170,23 +170,23 @@ impl Color {
     }
 
     pub fn to_spherical_hcl(self) -> Color {
-        self.to_color(ColorType::SphericalHCLA)
+        self.to_color(ColorType::SphericalHCLA).wrap_hue()
     }
 
     pub fn to_spherical_hwb(self) -> Color {
-        self.to_color(ColorType::SphericalHWBA)
+        self.to_color(ColorType::SphericalHWBA).wrap_hue()
     }
 
     pub fn to_cubic_hwb(self) -> Color {
-        self.to_color(ColorType::CubicHWBA)
+        self.to_color(ColorType::CubicHWBA).wrap_hue()
     }
 
     pub fn to_hsl(self) -> Color {
-        self.to_color(ColorType::HSLA)
+        self.to_color(ColorType::HSLA).wrap_hue()
     }
 
     pub fn to_cubic_hsv(self) -> Color {
-        self.to_color(ColorType::CubicHSVA)
+        self.to_color(ColorType::CubicHSVA).wrap_hue()
     }
 
     pub fn to_cmyk(self) -> Color {
