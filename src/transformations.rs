@@ -1,4 +1,4 @@
-use crate::Color;
+use crate::{Color, IntoColor};
 #[derive(Clone)]
 enum NormalCurve {
     Linear,
@@ -142,6 +142,11 @@ where
 
     result
 }
+
+pub fn color_lerp(a: Color, b: Color, percent: f32) -> Color {
+    let lerp_array = array_lerp(&a.to_array(), &b.to_array(), percent);
+    lerp_array.into_color(a.color_type)
+} 
 
 pub fn lerp<T>(a: T, b: T, percent: T) -> T
 where
