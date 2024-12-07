@@ -5,7 +5,7 @@ pub mod constants;
 pub mod transformations;
 
 use num_traits::{AsPrimitive, PrimInt, Unsigned};
-use transformations::{lerp, DefinedColor};
+use transformations::{*};
 use std::f32::consts::PI;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -55,7 +55,7 @@ impl ColorModel {
             _ => false,
         }
     }
-    pub fn is_2D_hue(&self) -> bool {
+    pub fn is_luma_chroma(&self) -> bool {
         match self {
             //ColorModel::YDbDr |
             //ColorModel::YIQ |
@@ -65,6 +65,12 @@ impl ColorModel {
             _ => false,
         }
     }
+}
+
+pub enum ColorSpace{
+    XYZ,
+    Cylindrical,
+    Symmetric,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq)]
@@ -134,14 +140,49 @@ impl Color {
     }
 
     pub fn to_u8_array(&self) -> [u8; 4] {
-        [
-            (self.components[0] * 255.) as u8,
-            (self.components[1] * 255.) as u8,
-            (self.components[2] * 255.) as u8,
-            (self.components[3] * 255.) as u8,
-        ]
+        self.components.map(|component| (component * 255.) as u8)
     }
 
+    pub fn colorspace_to_xyz(&self, color_space: ColorSpace) -> Color {
+        match color_space{
+            ColorSpace::XYZ => self.clone(),
+            ColorSpace::Cylindrical => {
+                let (x,y,z) = cylindrical_to_xyz(self.components[0], self.components[1], self.components[2]);
+                (x,y,z,self.components[3]).into_color(self.color_type)
+            },
+            ColorSpace::Symmetric => {
+                let (x,y,z) = symmetric_to_xyz(self.components[0], self.components[1], self.components[2]);
+                (x,y,z,self.components[3]).into_color(self.color_type)
+            },
+        }
+    }
+
+    pub fn from_space_to_space(&self, current_color_space: ColorSpace, new_color_space: ColorSpace) -> Color {
+        let xyz_color = self.colorspace_to_xyz(current_color_space);
+        match new_color_space{
+            ColorSpace::XYZ => xyz_color,
+            ColorSpace::Cylindrical => {
+                let (x,y,z) = xyz_to_cylindrical(xyz_color.components[0], xyz_color.components[1], xyz_color.components[2]);
+                (x,y,z,self.components[3]).into_color(xyz_color.color_type)
+            },
+            ColorSpace::Symmetric => {
+                let (x,y,z) = symmetric_to_xyz(self.components[0], self.components[1], self.components[2]);
+                (x,y,z,self.components[3]).into_color(self.color_type)
+            },
+        }
+    }
+
+    pub fn rotate_colorspace_clockwise(&self) -> Color {
+        colorspace_transform(self.clone(),rotate_axes_clockwise)
+    }
+
+    pub fn rotate_colorspace_counterclockwise(&self) -> Color {
+        colorspace_transform(self.clone(),rotate_axes_counterclockwise)
+    }
+
+    pub fn mirror_colorspace(&self) -> Color {
+        colorspace_transform(self.clone(),mirror_axes)
+    }
 
     pub fn to_rgb(&self) -> Color {
         if self.color_type == ColorModel::RGBA {
@@ -755,6 +796,13 @@ impl IntoColor for (f32, f32, f32, f32) {
     }
 }
 
+fn colorspace_transform(color: Color, transform: fn(f32,f32,f32) -> (f32,f32,f32)) -> Color {
+    let color_type = color.color_type;
+    let (a,b,c, alpha) = color.to_tuple();
+    let (a,b,c,) = transform(a,b,c);
+    let components = [a,b,c,alpha]; 
+    Color {components, color_type: color_type}
+}
 
 #[cfg(test)]
 mod tests {

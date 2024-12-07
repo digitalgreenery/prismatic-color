@@ -155,6 +155,39 @@ where
     a + (b - a) * percent
 }
 
+//Space Conversions
+pub fn cylindrical_to_xyz(theta: f32, r: f32, z: f32) -> (f32, f32, f32) {
+    let x = r * theta.cos();
+    let y = r * theta.sin();
+    (x, y, z)
+}
+
+pub fn xyz_to_cylindrical(x: f32, y: f32, z: f32) -> (f32, f32, f32) {
+    let r = (x.powi(2) + y.powi(2)).sqrt();
+    let theta = y.atan2(x);
+    (theta, r, z)
+}
+
+pub fn symmetric_to_xyz(x: f32, y: f32, z: f32) -> (f32, f32, f32) {
+    (x, y + 0.5, z + 0.5)
+}
+
+pub fn xyz_to_symmetric(x: f32, y: f32, z: f32) -> (f32, f32, f32) {
+    (x, y - 0.5, z - 0.5)
+}
+
+pub fn rotate_axes_clockwise(a: f32, b: f32, c: f32,) -> (f32, f32, f32) {
+    (b,c,a)
+}
+
+pub fn rotate_axes_counterclockwise(a: f32, b: f32, c: f32,) -> (f32, f32, f32) {
+    (c,a,b)
+}
+
+pub fn mirror_axes(a: f32, b: f32, c: f32,) -> (f32, f32, f32) {
+    (a,c,b)
+}
+
 mod test{
     
 
