@@ -162,12 +162,12 @@ impl Color {
         match new_color_space{
             ColorSpace::XYZ => xyz_color,
             ColorSpace::Cylindrical => {
-                let (x,y,z) = xyz_to_cylindrical(xyz_color.components[0], xyz_color.components[1], xyz_color.components[2]);
-                (x,y,z,self.components[3]).into_color(xyz_color.color_type)
+                let (a,b,c) = xyz_to_cylindrical(xyz_color.components[0], xyz_color.components[1], xyz_color.components[2]);
+                (a,b,c,self.components[3]).into_color(xyz_color.color_type)
             },
             ColorSpace::Symmetric => {
-                let (x,y,z) = symmetric_to_xyz(self.components[0], self.components[1], self.components[2]);
-                (x,y,z,self.components[3]).into_color(self.color_type)
+                let (a,b,c) = xyz_to_symmetric(self.components[0], self.components[1], self.components[2]);
+                (a,b,c,self.components[3]).into_color(self.color_type)
             },
         }
     }
