@@ -1,8 +1,8 @@
 
 use crate::Color;
-use crate::ColorType;
+use crate::ColorModel;
 
-pub const TRANSPARENT: Color = Color {components: [0., 1., 0., 0.], color_type: ColorType::SphericalHWBA,};
+pub const TRANSPARENT: Color = Color {components: [0., 1., 0., 0.], color_type: ColorModel::SphericalHWBA,};
 pub const WHITE: Color = Color::spherical_hwb(0., 1., 0.);
 pub const BLACK: Color = Color::spherical_hwb(0., 0., 1.);
 pub const GREY: Color = Color::spherical_hwb(0., 0.5, 0.5);

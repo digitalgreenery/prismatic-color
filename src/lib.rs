@@ -8,14 +8,8 @@ use num_traits::{AsPrimitive, PrimInt, Unsigned};
 use transformations::{lerp, DefinedColor};
 use std::f32::consts::PI;
 
-#[derive(Debug, Clone, Copy, PartialEq)]
-pub struct Color {
-    components: [f32; 4], //maybe make a fixed point library in the future
-    color_type: ColorType,
-}
-
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub enum ColorType {
+pub enum ColorModel {
     //Spectral Color
     // WBIS,
 
@@ -27,22 +21,56 @@ pub enum ColorType {
     RGBW,
     CMYK,
 
+    //Cylindrical Color Models
     //Spherical Representations
     SphericalHCLA,
     SphericalHWBA,
     // SphericalHSVA,
 
     //Cubic Representations
-    //Circular Hue
-    HSLA,
+    CubicHSLA,
     CubicHSVA,
     CubicHWBA,
+
     //Square Hue
     YUVA,
+    //YDbDr,
+    //YIQ,
+    //YPbPr,
+    //YCbCr,
 
     //La*b*
     // LabHCLA,
     // LabA,
+}
+
+impl ColorModel {
+    pub fn is_cylindrical(&self) -> bool {
+        match self {
+            ColorModel::SphericalHCLA |
+            ColorModel::SphericalHWBA |
+            ColorModel::CubicHSLA |
+            ColorModel::CubicHSVA |
+            ColorModel::CubicHWBA => true,
+            _ => false,
+        }
+    }
+    pub fn is_2D_hue(&self) -> bool {
+        match self {
+            //ColorModel::YDbDr |
+            //ColorModel::YIQ |
+            //ColorModel::YPbPr |
+            //ColorModel::YCbCr |
+            ColorModel::YUVA => true,
+            _ => false,
+        }
+    }
+}
+
+#[derive(Debug, Clone, Copy, PartialEq)]
+pub struct Color {
+    components: [f32; 4], //maybe make a fixed point library in the future
+    color_type: ColorModel,
 }
 
 impl Color {
@@ -50,44 +78,44 @@ impl Color {
     pub const fn rgb(red: f32, green: f32, blue: f32) -> Color {
         Color {
             components: [red, green, blue, 1.],
-            color_type: ColorType::RGBA,
+            color_type: ColorModel::RGBA,
         }
     }
     pub const fn spherical_hcl(hue: f32, chroma: f32, luminance: f32) -> Color {
         Color {
             components: [hue, chroma, luminance, 1.],
-            color_type: ColorType::SphericalHCLA,
+            color_type: ColorModel::SphericalHCLA,
         }
     }
     pub const fn spherical_hwb(hue: f32, white: f32, black: f32) -> Color {
         Color {
             components: [hue, white, black, 1.],
-            color_type: ColorType::SphericalHWBA,
+            color_type: ColorModel::SphericalHWBA,
         }
     }
     pub const fn cubic_hwb(hue: f32, white: f32, black: f32) -> Color {
         Color {
             components: [hue, white, black, 1.],
-            color_type: ColorType::CubicHWBA,
+            color_type: ColorModel::CubicHWBA,
         }
     }
     pub const fn cubic_hsv(hue: f32, saturation: f32, value: f32) -> Color {
         Color {
             components: [hue, saturation, value, 1.],
-            color_type: ColorType::CubicHSVA,
+            color_type: ColorModel::CubicHSVA,
         }
     }
 
-    pub const fn from_array(components: [f32; 4], color_type: ColorType) -> Color{
+    pub const fn from_array(components: [f32; 4], color_type: ColorModel) -> Color{
         Color { components: components, color_type: color_type }
     }
 
-    pub const fn from_tuple(components: (f32,f32,f32,f32), color_type: ColorType) -> Color{
+    pub const fn from_tuple(components: (f32,f32,f32,f32), color_type: ColorModel) -> Color{
         Color { components: [components.0,components.1,components.2,components.3], color_type: color_type }
     }   
 
     pub fn set_alpha(&self, alpha: f32) -> Color {
-        if self.color_type == ColorType::CMYK || self.color_type == ColorType::RGBW {
+        if self.color_type == ColorModel::CMYK || self.color_type == ColorModel::RGBW {
             return *self;
         }
         let components = self.components;
@@ -116,32 +144,32 @@ impl Color {
 
 
     pub fn to_rgb(&self) -> Color {
-        if self.color_type == ColorType::RGBA {
+        if self.color_type == ColorModel::RGBA {
             return *self;
         }
         let components: [f32; 4] = match self.color_type {
             // ColorType::WI => spectral_color_to_rgb(self.components),
-            ColorType::RGBA => self.components,
-            ColorType::CMYA => cmy_to_rgb(self.components),
-            ColorType::RGBW => rgbw_to_rgb(self.components),
-            ColorType::CMYK => cmyk_to_rgb(self.components),
-            ColorType::SphericalHCLA => spherical_hcl_to_rgb(self.wrap_hue().components),
-            ColorType::SphericalHWBA => spherical_hwb_to_rgb(self.wrap_hue().components),
+            ColorModel::RGBA => self.components,
+            ColorModel::CMYA => cmy_to_rgb(self.components),
+            ColorModel::RGBW => rgbw_to_rgb(self.components),
+            ColorModel::CMYK => cmyk_to_rgb(self.components),
+            ColorModel::SphericalHCLA => spherical_hcl_to_rgb(self.wrap_hue().components),
+            ColorModel::SphericalHWBA => spherical_hwb_to_rgb(self.wrap_hue().components),
             // ColorType::SphericalHSVA => shperical_hsv_to_rgb(self.components),
-            ColorType::HSLA => cubic_hsl_to_rgb(self.wrap_hue().components),
-            ColorType::CubicHSVA => cubic_hsv_to_rgb(self.wrap_hue().components),
-            ColorType::CubicHWBA => cubic_hwb_to_rgb(self.wrap_hue().components),
-            ColorType::YUVA => yuv_to_rgb(self.components),
+            ColorModel::CubicHSLA => cubic_hsl_to_rgb(self.wrap_hue().components),
+            ColorModel::CubicHSVA => cubic_hsv_to_rgb(self.wrap_hue().components),
+            ColorModel::CubicHWBA => cubic_hwb_to_rgb(self.wrap_hue().components),
+            ColorModel::YUVA => yuv_to_rgb(self.components),
             // ColorType::LabHCLA => lch_to_rgb(self.components),
             // ColorType::LabA => lab_to_rgb(self.components),
         };
         Color {
             components,
-            color_type: ColorType::RGBA,
+            color_type: ColorModel::RGBA,
         }
     }
 
-    pub fn to_color(&self, target_type: ColorType) -> Color {
+    pub fn to_color(&self, target_type: ColorModel) -> Color {
         if self.color_type == target_type {
             return *self;
         }
@@ -151,16 +179,16 @@ impl Color {
 
         // Determine the conversion function based on the target ColorType
         let components = match target_type {
-            ColorType::SphericalHCLA => rgb_to_spherical_hcl(rgb_color.components),
-            ColorType::SphericalHWBA => rgb_to_spherical_hwb(rgb_color.components),
-            ColorType::CubicHWBA => rgb_to_cubic_hwb(rgb_color.components),
-            ColorType::HSLA => rgb_to_hsl(rgb_color.components),
-            ColorType::CubicHSVA => rgb_to_cubic_hsv(rgb_color.components),
-            ColorType::CMYK => rgb_to_cmyk(rgb_color.components),
-            ColorType::CMYA => rgb_to_cmy(rgb_color.components),
-            ColorType::RGBW => rgb_to_rgbw(rgb_color.components),
-            ColorType::YUVA => rgb_to_yuv(rgb_color.components),
-            ColorType::RGBA => rgb_color.components, // Already in RGB, no conversion needed
+            ColorModel::SphericalHCLA => rgb_to_spherical_hcl(rgb_color.components),
+            ColorModel::SphericalHWBA => rgb_to_spherical_hwb(rgb_color.components),
+            ColorModel::CubicHWBA => rgb_to_cubic_hwb(rgb_color.components),
+            ColorModel::CubicHSLA => rgb_to_hsl(rgb_color.components),
+            ColorModel::CubicHSVA => rgb_to_cubic_hsv(rgb_color.components),
+            ColorModel::CMYK => rgb_to_cmyk(rgb_color.components),
+            ColorModel::CMYA => rgb_to_cmy(rgb_color.components),
+            ColorModel::RGBW => rgb_to_rgbw(rgb_color.components),
+            ColorModel::YUVA => rgb_to_yuv(rgb_color.components),
+            ColorModel::RGBA => rgb_color.components, // Already in RGB, no conversion needed
         };
 
         Color {
@@ -170,39 +198,39 @@ impl Color {
     }
 
     pub fn to_spherical_hcl(self) -> Color {
-        self.to_color(ColorType::SphericalHCLA).wrap_hue()
+        self.to_color(ColorModel::SphericalHCLA).wrap_hue()
     }
 
     pub fn to_spherical_hwb(self) -> Color {
-        self.to_color(ColorType::SphericalHWBA).wrap_hue()
+        self.to_color(ColorModel::SphericalHWBA).wrap_hue()
     }
 
     pub fn to_cubic_hwb(self) -> Color {
-        self.to_color(ColorType::CubicHWBA).wrap_hue()
+        self.to_color(ColorModel::CubicHWBA).wrap_hue()
     }
 
     pub fn to_hsl(self) -> Color {
-        self.to_color(ColorType::HSLA).wrap_hue()
+        self.to_color(ColorModel::CubicHSLA).wrap_hue()
     }
 
     pub fn to_cubic_hsv(self) -> Color {
-        self.to_color(ColorType::CubicHSVA).wrap_hue()
+        self.to_color(ColorModel::CubicHSVA).wrap_hue()
     }
 
     pub fn to_cmyk(self) -> Color {
-        self.to_color(ColorType::CMYK)
+        self.to_color(ColorModel::CMYK)
     }
 
     pub fn to_cmy(self) -> Color {
-        self.to_color(ColorType::CMYA)
+        self.to_color(ColorModel::CMYA)
     }
 
     pub fn to_rgbw(self) -> Color {
-        self.to_color(ColorType::RGBW)
+        self.to_color(ColorModel::RGBW)
     }
 
     pub fn to_yuva(self) -> Color {
-        self.to_color(ColorType::YUVA)
+        self.to_color(ColorModel::YUVA)
     }
 
     pub fn as_f32(self) -> (f32,f32,f32,f32){
@@ -233,7 +261,7 @@ impl Color {
 
         Color {
             components: [r_remapped, g_remapped, b_remapped, a],
-            color_type: ColorType::RGBA,
+            color_type: ColorModel::RGBA,
         }.to_color(self.color_type)
     }
 
@@ -264,8 +292,8 @@ impl Color {
 
     fn gradient_hue(start: &Color, end: &Color, steps: usize) -> Vec<Color> {
         let start_hue =
-        if start.components[1] == 0. && (start.color_type != ColorType::CubicHWBA ||  start.color_type != ColorType::SphericalHWBA) ||
-        start.components[1] == start.components[2] && (start.color_type == ColorType::CubicHWBA ||  start.color_type == ColorType::SphericalHWBA) {
+        if start.components[1] == 0. && (start.color_type != ColorModel::CubicHWBA ||  start.color_type != ColorModel::SphericalHWBA) ||
+        start.components[1] == start.components[2] && (start.color_type == ColorModel::CubicHWBA ||  start.color_type == ColorModel::SphericalHWBA) {
             end.components[0] 
         }
         else{
@@ -290,38 +318,38 @@ impl Color {
         let end = end.convert_color(color_type);
         return match color_type {
             //Spherical Representations
-            ColorType::SphericalHCLA |
-            ColorType::SphericalHWBA |
+            ColorModel::SphericalHCLA |
+            ColorModel::SphericalHWBA |
             //Cubic Representations
-            ColorType::HSLA |
-            ColorType::CubicHSVA |
-            ColorType::CubicHWBA 
+            ColorModel::CubicHSLA |
+            ColorModel::CubicHSVA |
+            ColorModel::CubicHWBA 
             => Self::gradient_hue(&start, &end, steps),
             _ => Self::gradient_fn(&start, &end, steps)
         
         }
     }    
 
-    pub fn convert_colors(colors: Vec<Color>,color_type: ColorType) -> Vec<Color> {
+    pub fn convert_colors(colors: Vec<Color>,color_type: ColorModel) -> Vec<Color> {
         return colors.into_iter().map(|color| color.convert_color(color_type)).collect()
     }
 
-    pub fn convert_color(&self, color_type: ColorType) -> Color {
+    pub fn convert_color(&self, color_type: ColorModel) -> Color {
         if self.color_type == color_type {
             return *self;
         }
         let color = self.to_rgb();
         return match color_type {
-            ColorType::RGBA => color,
-            ColorType::CMYA => color.to_cmy(),
-            ColorType::RGBW => color.to_rgbw(),
-            ColorType::CMYK => color.to_cmyk(),
-            ColorType::SphericalHCLA => color.to_spherical_hcl(),
-            ColorType::SphericalHWBA => color.to_spherical_hwb(),
-            ColorType::HSLA => color.to_hsl(),
-            ColorType::CubicHSVA => color.to_cubic_hsv(),
-            ColorType::CubicHWBA => color.to_cubic_hwb(),
-            ColorType::YUVA => color.to_yuva(),
+            ColorModel::RGBA => color,
+            ColorModel::CMYA => color.to_cmy(),
+            ColorModel::RGBW => color.to_rgbw(),
+            ColorModel::CMYK => color.to_cmyk(),
+            ColorModel::SphericalHCLA => color.to_spherical_hcl(),
+            ColorModel::SphericalHWBA => color.to_spherical_hwb(),
+            ColorModel::CubicHSLA => color.to_hsl(),
+            ColorModel::CubicHSVA => color.to_cubic_hsv(),
+            ColorModel::CubicHWBA => color.to_cubic_hwb(),
+            ColorModel::YUVA => color.to_yuva(),
         }
     }
 
@@ -706,11 +734,11 @@ impl From<Color> for [u16; 4] {
 }
 
 pub trait IntoColor {
-    fn into_color(self, color_type: ColorType) -> Color;
+    fn into_color(self, color_type: ColorModel) -> Color;
 }
 
 impl IntoColor for [f32; 4] {
-    fn into_color(self, color_type: ColorType) -> Color {
+    fn into_color(self, color_type: ColorModel) -> Color {
         Color {
             components: self,
             color_type,
@@ -719,7 +747,7 @@ impl IntoColor for [f32; 4] {
 }
 
 impl IntoColor for (f32, f32, f32, f32) {
-    fn into_color(self, color_type: ColorType) -> Color {
+    fn into_color(self, color_type: ColorModel) -> Color {
         Color {
             components: [self.0, self.1, self.2, self.3],
             color_type,
