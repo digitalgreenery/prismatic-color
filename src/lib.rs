@@ -144,6 +144,14 @@ impl Color {
         self.components.map(|component| (component * 255.) as u8)
     }
 
+    pub fn get_colorspace(&self) -> ColorSpace {
+        match self.color_type {
+            model if model.is_cylindrical() => ColorSpace::Cylindrical,
+            model if model.is_luma_chroma() => ColorSpace::Symmetric,
+            _ => ColorSpace::XYZ,
+        }
+    }
+
     pub fn colorspace_to_xyz(&self, color_space: ColorSpace) -> Color {
         match color_space{
             ColorSpace::XYZ => self.clone(),
