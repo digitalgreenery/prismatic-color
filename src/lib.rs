@@ -152,7 +152,11 @@ impl Color {
         }
     }
 
-    pub fn colorspace_to_xyz(&self, color_space: ColorSpace) -> Color {
+    pub fn into_colorspace(&self, color_space: ColorSpace) -> Color {
+        self.from_space_to_space(self.get_colorspace(), color_space)
+    }
+
+    fn colorspace_to_xyz(&self, color_space: ColorSpace) -> Color {
         match color_space{
             ColorSpace::XYZ => self.clone(),
             ColorSpace::Cylindrical => {
