@@ -157,14 +157,16 @@ where
 
 //Space Conversions
 pub fn cylindrical_to_xyz(theta: f32, r: f32, z: f32) -> (f32, f32, f32) {
-    let x = r * theta.cos();
-    let y = r * theta.sin();
+    let theta_radians = theta * std::f32::consts::TAU; // TAU is 2π
+    let x = r * theta_radians.cos();
+    let y = r * theta_radians.sin();
     (x, y, z)
 }
 
 pub fn xyz_to_cylindrical(x: f32, y: f32, z: f32) -> (f32, f32, f32) {
     let r = (x.powi(2) + y.powi(2)).sqrt();
-    let theta = y.atan2(x);
+    let theta_radians = y.atan2(x);
+    let theta = theta_radians / std::f32::consts::TAU; // Convert back to rotations
     (theta, r, z)
 }
 
