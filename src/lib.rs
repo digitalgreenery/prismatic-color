@@ -327,63 +327,6 @@ impl Color {
         DefinedColor::gamma(self.to_rgb(), gamma).collapse_color().to_color(self.color_type)
     }
 
-    // Function to generate a gradient between two colors
-    fn gradient_fn(start: &Color, end: &Color, steps: usize) -> Vec<Color> {
-        let mut colors = Vec::with_capacity(steps);
-        for i in 0..steps {
-            let t = i as f32 / (steps as f32 - 1.0);  // t varies between 0.0 and 1.0
-            
-            let new_values = transformations::array_lerp(&start.to_array(), &end.to_array(), t);
-
-            colors.push(Color {
-                color_type: start.color_type, // Or handle the color type logic as needed
-                components: new_values,
-            });
-        }
-
-        colors
-    } 
-
-    fn gradient_hue(start: &Color, end: &Color, steps: usize) -> Vec<Color> {
-        let start_hue =
-        if start.components[1] == 0. && (start.color_type != ColorModel::CubicHWBA ||  start.color_type != ColorModel::SphericalHWBA) ||
-        start.components[1] == start.components[2] && (start.color_type == ColorModel::CubicHWBA ||  start.color_type == ColorModel::SphericalHWBA) {
-            end.components[0] 
-        }
-        else{
-            start.components[0]
-        };
-        let end_hue =
-        if end.components[0] < start.components[0] {
-            end.components[0] + 1.
-        }
-        else{
-            end.components[0]
-        };
-        let start_array = [start_hue,start.components[1],start.components[2],start.components[3]];
-        let end_array = [end_hue,end.components[1],end.components[2],end.components[3]];
-        let start = Color { components: start_array, color_type: start.color_type }; 
-        let end = Color { components: end_array, color_type: end.color_type }; 
-        return  Self::gradient_fn(&start, &end, steps).iter().map(|color| color.wrap_hue()).collect()
-    }
-
-    pub fn gradient(start: &Color, end: &Color, steps: usize) -> Vec<Color> {
-        let color_type = start.color_type;
-        let end = end.convert_color(color_type);
-        return match color_type {
-            //Spherical Representations
-            ColorModel::SphericalHCLA |
-            ColorModel::SphericalHWBA |
-            //Cubic Representations
-            ColorModel::CubicHSLA |
-            ColorModel::CubicHSVA |
-            ColorModel::CubicHWBA 
-            => Self::gradient_hue(&start, &end, steps),
-            _ => Self::gradient_fn(&start, &end, steps)
-        
-        }
-    }    
-
     pub fn convert_colors(colors: Vec<Color>,color_type: ColorModel) -> Vec<Color> {
         return colors.into_iter().map(|color| color.convert_color(color_type)).collect()
     }
@@ -809,6 +752,74 @@ impl IntoColor for (f32, f32, f32, f32) {
     }
 }
 
+// Function to generate a gradient between two colors
+fn gradient_fn(start: &Color, end: &Color, steps: usize) -> Vec<Color> {
+    let mut colors = Vec::with_capacity(steps);
+    for i in 0..steps {
+        let t = i as f32 / (steps as f32 - 1.0);  // t varies between 0.0 and 1.0
+        
+        let new_values = transformations::array_lerp(&start.to_array(), &end.to_array(), t);
+
+        colors.push(Color {
+            color_type: start.color_type, // Or handle the color type logic as needed
+            components: new_values,
+        });
+    }
+
+    colors
+} 
+
+fn gradient_hue(start: &Color, end: &Color, steps: usize) -> Vec<Color> {
+    let start_hue =
+    if start.components[1] == 0. && (start.color_type != ColorModel::CubicHWBA ||  start.color_type != ColorModel::SphericalHWBA) ||
+    start.components[1] == start.components[2] && (start.color_type == ColorModel::CubicHWBA ||  start.color_type == ColorModel::SphericalHWBA) {
+        end.components[0] 
+    }
+    else{
+        start.components[0]
+    };
+    let end_hue =
+    if end.components[0] < start.components[0] {
+        end.components[0] + 1.
+    }
+    else{
+        end.components[0]
+    };
+    let start_array = [start_hue,start.components[1],start.components[2],start.components[3]];
+    let end_array = [end_hue,end.components[1],end.components[2],end.components[3]];
+    let start = Color { components: start_array, color_type: start.color_type }; 
+    let end = Color { components: end_array, color_type: end.color_type }; 
+    return  gradient_fn(&start, &end, steps).iter().map(|color| color.wrap_hue()).collect()
+}
+
+pub fn linear_gradient(start: &Color, end: &Color, steps: usize) -> Vec<Color> {
+    let color_type = start.color_type;
+    let end = end.convert_color(color_type);
+    if color_type.is_cylindrical(){
+       return gradient_hue(&start, &end, steps);
+    }
+    gradient_fn(&start, &end, steps)
+    
+}    
+
+pub fn bilinear_gradient(top_left: &Color, top_right: &Color, bottom_left: &Color, bottom_right: &Color, rows: usize, cols: usize) -> Vec<Vec<Color>>{
+    // Generate vertical gradients for the left and right edges
+    let left_gradient = linear_gradient(top_left, bottom_left, rows);
+    let right_gradient = linear_gradient(top_right, bottom_right, rows);
+
+    // Create the 2D gradient grid
+    let mut gradient = Vec::new();
+
+    for row in 0..rows {
+        // Interpolate horizontally for this row
+        let row_gradient = linear_gradient(&left_gradient[row], &right_gradient[row], cols);
+        gradient.push(row_gradient);
+    }
+
+    gradient
+}
+
+
 fn colorspace_transform(color: Color, transform: fn(f32,f32,f32) -> (f32,f32,f32)) -> Color {
     let color_type = color.color_type;
     let (a,b,c, alpha) = color.to_tuple();
@@ -849,7 +860,7 @@ mod tests {
         let end = Color::spherical_hwb(0.95, 0.0, 0.0);   // Red
         let steps = 10;
 
-        let gradient = Color::gradient(&start, &end, steps);
+        let gradient = linear_gradient(&start, &end, steps);
         
         // Print the results for inspection
         for (i, color) in gradient.iter().enumerate() {
